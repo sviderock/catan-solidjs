@@ -1,4 +1,5 @@
 import { Index, type JSX, createSignal } from "solid-js";
+import { type TownState } from "./Board";
 
 const HexType = {
   brick: { color: "text-red-400", icon: "🧱" },
@@ -8,16 +9,23 @@ const HexType = {
   wool: { color: "text-lime-600", icon: "🐑" }
 } satisfies Record<HexagonProps["type"], { color: string; icon: string }>;
 
+interface Position {
+  x: number;
+  y: number;
+}
 export interface HexagonProps {
   type: "brick" | "lumber" | "ore" | "grain" | "wool";
   children?: JSX.Element;
   x: number;
   y: number;
-  onHover: (data: { x: number | null; y: number | null }) => void;
-  active?: boolean;
+  highlighted?: boolean;
+  townHovered: number | null;
   rowLen: number;
   prevRowLen: number | null;
   nextRowLen: number | null;
+  onRoadHover: (data: { x: number | null; y: number | null }) => void;
+  onTownHover: (data: TownState) => void;
+  onTownClick: (data: TownState) => void;
 }
 
 export default function Hexagon(props: HexagonProps) {
@@ -32,15 +40,43 @@ export default function Hexagon(props: HexagonProps) {
    * 4 neighbour = x,   y-1   |
    * 5 neighbour = x-1, y-1   |   y    if (prevRowLen < rowLen)
    */
-  function calculateNeighbour(idx: number) {
-    // prettier-ignore
+  function getNeighbour(idx: number): Position | null {
     switch (idx) {
-      case 0: return { x: props.x - 1,  y: props.prevRowLen > props.rowLen ? props.y + 1 : props.y };
-      case 1: return { x: props.x,      y: props.y + 1 };
-      case 2: return { x: props.x + 1,  y: props.nextRowLen < props.rowLen ? props.y : props.y + 1 };
-      case 3: return { x: props.x + 1,  y: props.nextRowLen < props.rowLen ? props.y - 1 : props.y };
-      case 4: return { x: props.x,      y: props.y - 1 };
-      case 5: return { x: props.x - 1,  y: props.prevRowLen > props.rowLen ? props.y : props.y - 1 };
+      case 0: {
+        if (props.prevRowLen === null) return null;
+        const y = props.prevRowLen > props.rowLen ? props.y + 1 : props.y;
+        if (y >= props.prevRowLen) return null;
+        return { x: props.x - 1, y };
+      }
+      case 1: {
+        if (props.y + 1 >= props.rowLen) return null;
+        return { x: props.x, y: props.y + 1 };
+      }
+      case 2: {
+        if (props.nextRowLen === null) return null;
+        const y = props.nextRowLen < props.rowLen ? props.y : props.y + 1;
+        if (y >= props.nextRowLen) return null;
+        return { x: props.x + 1, y };
+      }
+      case 3: {
+        if (props.nextRowLen === null) return null;
+        const y = props.nextRowLen < props.rowLen ? props.y - 1 : props.y;
+        if (y < 0) return null;
+        return { x: props.x + 1, y };
+      }
+      case 4: {
+        if (props.y - 1 < 0) return null;
+        return { x: props.x, y: props.y - 1 };
+      }
+      case 5: {
+        if (props.prevRowLen === null) return null;
+        const y = props.prevRowLen > props.rowLen ? props.y : props.y - 1;
+        if (y < 0) return null;
+        return { x: props.x - 1, y };
+      }
+
+      default:
+        return null;
     }
   }
 
@@ -48,8 +84,33 @@ export default function Hexagon(props: HexagonProps) {
     return `${pos.x},${pos.y}`;
   }
 
+  function getNeighbourTownState(idx: number, townIdx: number): TownState {
+    const neighbour = getNeighbour(idx);
+    return neighbour ? { [`${neighbour.x},${neighbour.y}`]: townIdx } : {};
+  }
+
+  function getSettlement(idx: number): TownState {
+    const towns: TownState = { [`${props.x},${props.y}`]: idx };
+    switch (idx) {
+      case 0:
+        return { ...towns, ...getNeighbourTownState(5, 2), ...getNeighbourTownState(0, 4) };
+      case 1:
+        return { ...towns, ...getNeighbourTownState(0, 3), ...getNeighbourTownState(1, 5) };
+      case 2:
+        return { ...towns, ...getNeighbourTownState(1, 4), ...getNeighbourTownState(2, 0) };
+      case 3:
+        return { ...towns, ...getNeighbourTownState(2, 5), ...getNeighbourTownState(3, 1) };
+      case 4:
+        return { ...towns, ...getNeighbourTownState(3, 0), ...getNeighbourTownState(4, 2) };
+      case 5:
+        return { ...towns, ...getNeighbourTownState(4, 1), ...getNeighbourTownState(5, 3) };
+      default:
+        return towns;
+    }
+  }
+
   return (
-    <div class="relative" classList={{ "transition scale-[102%]": props.active }}>
+    <div class="relative" classList={{ "transition scale-[102%]": props.highlighted }}>
       <div
         class={`${
           HexType[props.type].color
@@ -61,7 +122,7 @@ export default function Hexagon(props: HexagonProps) {
       <Index each={settlements()}>
         {(_, idx) => (
           <div
-            class="absolute z-10 flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-full transition hover:scale-125"
+            class="absolute z-10 flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-full transition"
             classList={{
               "bg-blue-100 border-2 border-black top-0 left-2/4 translate-y-[5px] translate-x-[-50%]":
                 idx === 0,
@@ -74,8 +135,12 @@ export default function Hexagon(props: HexagonProps) {
               "bg-blue-100 border-2 border-black top-3/4 left-0 translate-y-[-100%] translate-x-[2px]":
                 idx === 4,
               "bg-blue-100 border-2 border-black top-1/4 left-0 translate-y-[0] translate-x-[2px]":
-                idx === 5
+                idx === 5,
+              "scale-125": props.townHovered === idx
             }}
+            onMouseOver={() => props.onTownHover(getSettlement(idx))}
+            onMouseOut={() => props.onTownHover({})}
+            onClick={() => props.onTownClick(getSettlement(idx))}
           >
             {idx}
           </div>
@@ -84,7 +149,7 @@ export default function Hexagon(props: HexagonProps) {
 
       <Index each={roads()}>
         {(_, idx) => {
-          const neighbour = calculateNeighbour(idx);
+          const neighbour = getNeighbour(idx);
           return (
             <div
               class="absolute z-10 flex h-[10px] w-[10px] cursor-pointer items-center justify-center rounded-full text-[10px] transition hover:scale-125"
@@ -96,35 +161,14 @@ export default function Hexagon(props: HexagonProps) {
                 "top-[50%] left-[8%] translate-y-[-50%] translate-x-[-50%]": idx === 4,
                 "top-[20%] left-[28%] translate-y-[-50%] translate-x-[-50%]": idx === 5
               }}
-              onMouseOver={() => props.onHover(neighbour)}
-              onMouseOut={() => props.onHover({ x: null, y: null })}
+              onMouseOver={() => props.onRoadHover(neighbour || { x: null, y: null })}
+              onMouseOut={() => props.onRoadHover({ x: null, y: null })}
             >
-              {getPosition(neighbour)}
+              {neighbour ? getPosition(neighbour) : null}
             </div>
           );
         }}
       </Index>
-      {/* <Index each={roads()}>
-        {(road, idx) => (
-          <div
-            class="absolute z-10 flex h-[10px] w-[10px] cursor-pointer items-center justify-center rounded-full text-[10px] transition hover:scale-125"
-            classList={{
-              "bg-white border border-black top-[20%] left-[72%] translate-y-[-50%] translate-x-[-50%]":
-                idx === 0,
-              "bg-white border border-black top-[50%] left-[92%] translate-y-[-50%] translate-x-[-50%]":
-                idx === 1,
-              "bg-white border border-black top-[80%] left-[72%] translate-y-[-50%] translate-x-[-50%]":
-                idx === 2,
-              "bg-white border border-black top-[80%] left-[28%] translate-y-[-50%] translate-x-[-50%]":
-                idx === 3,
-              "bg-white border border-black top-[50%] left-[8%] translate-y-[-50%] translate-x-[-50%]":
-                idx === 4,
-              "bg-white border border-black top-[20%] left-[28%] translate-y-[-50%] translate-x-[-50%]":
-                idx === 5
-            }}
-          />
-        )}
-      </Index> */}
     </div>
   );
 }
