@@ -1,3 +1,4 @@
+/* eslint-disable solid/reactivity */
 import { type HexagonProps } from "./Hexagon";
 
 export function getRandomType() {

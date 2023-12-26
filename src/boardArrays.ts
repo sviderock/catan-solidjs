@@ -1,137 +1,121 @@
 import { getRandomType } from "./utils";
 
-export const regularBoard = [
+export const regularBoard: Hex[][] = [
+  [{ type: getRandomType() }, { type: getRandomType() }, { type: getRandomType() }],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
-  [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
-  ],
-  [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
-  ]
+  [{ type: getRandomType() }, { type: getRandomType() }, { type: getRandomType() }]
 ];
 
-export const bigBoard = [
+export const bigBoard: Hex[][] = [
+  [{ type: getRandomType() }, { type: getRandomType() }, { type: getRandomType() }],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
   [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() },
+    { type: getRandomType() }
   ],
-  [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
-  ],
-  [
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null },
-    { type: getRandomType(), t1: null, t2: null, t3: null, t4: null, t5: null, t6: null }
-  ]
+  [{ type: getRandomType() }, { type: getRandomType() }, { type: getRandomType() }]
 ];

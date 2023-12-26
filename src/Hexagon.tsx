@@ -1,5 +1,7 @@
 import { Index, type JSX, createSignal } from "solid-js";
-import { type TownState } from "./Board";
+import { getNeighbourHex } from "./utils/neighbour";
+import getTown from "./utils/getTowns";
+import { type HexHighlghted } from "./Board";
 
 const HexType = {
   brick: { color: "text-red-400", icon: "🧱" },
@@ -13,8 +15,9 @@ interface Position {
   x: number;
   y: number;
 }
+
 export interface HexagonProps {
-  type: "brick" | "lumber" | "ore" | "grain" | "wool";
+  type: Hex["type"];
   children?: JSX.Element;
   x: number;
   y: number;
@@ -23,7 +26,7 @@ export interface HexagonProps {
   rowLen: number;
   prevRowLen: number | null;
   nextRowLen: number | null;
-  onRoadHover: (data: { x: number | null; y: number | null }) => void;
+  onRoadHover: (data: HexHighlghted) => void;
   onTownHover: (data: TownState) => void;
   onTownClick: (data: TownState) => void;
 }
@@ -32,81 +35,30 @@ export default function Hexagon(props: HexagonProps) {
   const [settlements] = createSignal<number[]>(new Array(6).fill(0));
   const [roads] = createSignal<number[]>(new Array(6).fill(0));
 
-  /**
-   * 0 neighbour = x-1, y     |   x+1  if (prevRowLen < rowLen)
-   * 1 neighbour = x,   y+1   |
-   * 2 neighbour = x+1, y+1   |   y    if (nextRowLen < rowLen)
-   * 3 neighbour = x+1, y     |   y+1  if (nextRowLen < rowLen)
-   * 4 neighbour = x,   y-1   |
-   * 5 neighbour = x-1, y-1   |   y    if (prevRowLen < rowLen)
-   */
-  function getNeighbour(idx: number): Position | null {
-    switch (idx) {
-      case 0: {
-        if (props.prevRowLen === null) return null;
-        const y = props.prevRowLen > props.rowLen ? props.y + 1 : props.y;
-        if (y >= props.prevRowLen) return null;
-        return { x: props.x - 1, y };
-      }
-      case 1: {
-        if (props.y + 1 >= props.rowLen) return null;
-        return { x: props.x, y: props.y + 1 };
-      }
-      case 2: {
-        if (props.nextRowLen === null) return null;
-        const y = props.nextRowLen < props.rowLen ? props.y : props.y + 1;
-        if (y >= props.nextRowLen) return null;
-        return { x: props.x + 1, y };
-      }
-      case 3: {
-        if (props.nextRowLen === null) return null;
-        const y = props.nextRowLen < props.rowLen ? props.y - 1 : props.y;
-        if (y < 0) return null;
-        return { x: props.x + 1, y };
-      }
-      case 4: {
-        if (props.y - 1 < 0) return null;
-        return { x: props.x, y: props.y - 1 };
-      }
-      case 5: {
-        if (props.prevRowLen === null) return null;
-        const y = props.prevRowLen > props.rowLen ? props.y : props.y - 1;
-        if (y < 0) return null;
-        return { x: props.x - 1, y };
-      }
-
-      default:
-        return null;
-    }
-  }
-
   function getPosition(pos: { x: number; y: number }) {
-    return `${pos.x},${pos.y}`;
+    return `${pos.x}.${pos.y}`;
   }
 
-  function getNeighbourTownState(idx: number, townIdx: number): TownState {
-    const neighbour = getNeighbour(idx);
-    return neighbour ? { [`${neighbour.x},${neighbour.y}`]: townIdx } : {};
+  function getNeighbour(idx: number): Position | null {
+    return getNeighbourHex({
+      neighbourIdx: idx,
+      x: props.x,
+      y: props.y,
+      rowLen: props.rowLen,
+      prevRowLen: props.prevRowLen,
+      nextRowLen: props.nextRowLen
+    });
   }
 
   function getSettlement(idx: number): TownState {
-    const towns: TownState = { [`${props.x},${props.y}`]: idx };
-    switch (idx) {
-      case 0:
-        return { ...towns, ...getNeighbourTownState(5, 2), ...getNeighbourTownState(0, 4) };
-      case 1:
-        return { ...towns, ...getNeighbourTownState(0, 3), ...getNeighbourTownState(1, 5) };
-      case 2:
-        return { ...towns, ...getNeighbourTownState(1, 4), ...getNeighbourTownState(2, 0) };
-      case 3:
-        return { ...towns, ...getNeighbourTownState(2, 5), ...getNeighbourTownState(3, 1) };
-      case 4:
-        return { ...towns, ...getNeighbourTownState(3, 0), ...getNeighbourTownState(4, 2) };
-      case 5:
-        return { ...towns, ...getNeighbourTownState(4, 1), ...getNeighbourTownState(5, 3) };
-      default:
-        return towns;
-    }
+    return getTown({
+      townIdx: idx,
+      x: props.x,
+      y: props.y,
+      rowLen: props.rowLen,
+      prevRowLen: props.prevRowLen,
+      nextRowLen: props.nextRowLen
+    });
   }
 
   return (
