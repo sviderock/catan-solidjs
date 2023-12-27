@@ -1,146 +1,300 @@
-import { Index, createSignal } from "solid-js";
-import { createStore } from "solid-js/store";
+import { Index, createEffect, createSignal } from "solid-js";
+import { Portal } from "solid-js/web";
 import Hexagon from "./Hexagon";
 import { regularBoard } from "./boardArrays";
 import { getNeighbourHex } from "./utils/neighbour";
 
-export type HexHighlghted = HexPosition | { x: null; y: null };
+/**
+ * HEX INTERSECTION ROAD PLACEMENTS
+ * const x = (hexes.left + hexes.right) / 2 - townRect.width / 2;
+ * const y = (hexes.top + hexes.bottom) / 2 - townRect.height / 2;
+ */
 
-function getInitialState() {
-  const towns = regularBoard
-    .flatMap((hexRow, x) =>
-      hexRow.map((hex, y) => {
-        const pos = `${x}.${y}` as const;
-        const prevRowLen = x - 1 < 0 ? null : regularBoard[x - 1].length;
-        const nextRowLen = x + 1 >= regularBoard.length ? null : regularBoard[x + 1].length;
-        return [x, y, pos, +pos, hex.type, hexRow.length, prevRowLen, nextRowLen] as const;
-      })
-    )
-    .reduce((acc, [x, y, pos, num, type, rowLen, prevRowLen, nextRowLen]) => {
-      const first = getNeighbourHex({ neighbourIdx: 0, x, y, rowLen, prevRowLen, nextRowLen });
-      const second = getNeighbourHex({ neighbourIdx: 1, x, y, rowLen, prevRowLen, nextRowLen });
-      const third = getNeighbourHex({ neighbourIdx: 2, x, y, rowLen, prevRowLen, nextRowLen });
-      const fourth = getNeighbourHex({ neighbourIdx: 3, x, y, rowLen, prevRowLen, nextRowLen });
-      const fifth = getNeighbourHex({ neighbourIdx: 4, x, y, rowLen, prevRowLen, nextRowLen });
-      const sixth = getNeighbourHex({ neighbourIdx: 5, x, y, rowLen, prevRowLen, nextRowLen });
+export type HexHighlghted = Pick<Hex, "row" | "col"> | { row: null; col: null };
 
-      const towns = [
-        {
-          townCoefficient: (num + (sixth?.num || 0) + (first?.num || 0)).toFixed(2),
-          neighbours: [sixth?.pos, first?.pos].filter((hex): hex is HexPosition["pos"] => !!hex)
-        },
-        {
-          townCoefficient: (num + (first?.num || 0) + (second?.num || 0)).toFixed(2),
-          neighbours: [first?.pos, second?.pos].filter((hex): hex is HexPosition["pos"] => !!hex)
-        },
-        {
-          townCoefficient: (num + (second?.num || 0) + (third?.num || 0)).toFixed(2),
-          neighbours: [second?.pos, third?.pos].filter((hex): hex is HexPosition["pos"] => !!hex)
-        },
-        {
-          townCoefficient: (num + (third?.num || 0) + (fourth?.num || 0)).toFixed(2),
-          neighbours: [third?.pos, fourth?.pos].filter((hex): hex is HexPosition["pos"] => !!hex)
-        },
-        {
-          townCoefficient: (num + (fourth?.num || 0) + (fifth?.num || 0)).toFixed(2),
-          neighbours: [fourth?.pos, fifth?.pos].filter((hex): hex is HexPosition["pos"] => !!hex)
-        },
-        {
-          townCoefficient: (num + (fifth?.num || 0) + (sixth?.num || 0)).toFixed(2),
-          neighbours: [fifth?.pos, sixth?.pos].filter((hex): hex is HexPosition["pos"] => !!hex)
-        }
-      ].map((town, townIdx) => {
-        let townCoefficient = town.neighbours.length ? town.townCoefficient : `${pos}-${townIdx}`;
+const ORDERED_NEIGHBOURS_ARRAY = [
+  [5, 0],
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 4],
+  [4, 5]
+];
 
-        if (!acc[townCoefficient]) {
-          acc[townCoefficient] = {
-            active: false,
-            disabled: false,
-            hexes: [pos, ...town.neighbours] as const
-          };
-        }
-        return townCoefficient;
+function getHexes(): Hex[] {
+  return regularBoard.flatMap((hexRow, rowIdx) =>
+    hexRow.map((hex, colIdx) => {
+      const id = `${rowIdx}.${colIdx}` as const;
+      const prevRowLen = rowIdx - 1 < 0 ? null : regularBoard[rowIdx - 1]!.length;
+      const nextRowLen = rowIdx + 1 >= regularBoard.length ? null : regularBoard[rowIdx + 1]!.length;
+      const rowLen = hexRow.length;
+      const [hovered, setHovered] = createSignal(false);
+      const [calc, setCalc] = createSignal<HexCalculations>({
+        angles: [],
+        center: { x: -1, y: -1 },
+        heightSection: -1,
+        sizeToAngle: -1,
+        sizeToEdge: -1
       });
 
-      console.log(pos, towns);
+      return {
+        row: rowIdx,
+        col: colIdx,
+        idx: rowIdx + colIdx,
+        id: id,
+        type: hex.type,
+        rowLen: hexRow.length,
+        prevRowLen: rowIdx - 1 < 0 ? null : regularBoard[rowIdx - 1]!.length,
+        nextRowLen: rowIdx + 1 >= regularBoard.length ? null : regularBoard[rowIdx + 1]!.length,
+        hovered,
+        setHovered,
+        calc,
+        setCalc,
+        neighbours: [0, 1, 2, 3, 4, 5].map((idx) => {
+          return getNeighbourHex({
+            neighbourIdx: idx,
+            row: rowIdx,
+            col: colIdx,
+            rowLen,
+            prevRowLen,
+            nextRowLen
+          });
+        })
+      } satisfies Hex;
+    })
+  );
+}
+
+function getHexesById(hexes: Hex[]): { [hexId: Hex["id"]]: Hex } {
+  return hexes.reduce<{ [hexId: Hex["id"]]: Hex }>((acc, hex) => {
+    acc[hex.id] = hex;
+    return acc;
+  }, {});
+}
+
+function getTowns(hexes: ReturnType<typeof getHexes>) {
+  const hexById = getHexesById(hexes);
+  return hexes.reduce<{ [key: Town["id"]]: Town }>(
+    (acc, { row, col, id: hexId, type, rowLen, prevRowLen, nextRowLen, calc }) => {
+      ORDERED_NEIGHBOURS_ARRAY.forEach(([leftIdx, rightIdx], townIdx) => {
+        const left = getNeighbourHex({ neighbourIdx: leftIdx!, row, col, rowLen, prevRowLen, nextRowLen });
+        const right = getNeighbourHex({ neighbourIdx: rightIdx!, row, col, rowLen, prevRowLen, nextRowLen });
+
+        const hexes: Town["hexes"] = [
+          { id: hexId, townIdx, calc },
+          left
+            ? ({
+                id: left.id,
+                townIdx: left?.townToTown[townIdx]!,
+                calc: hexById[left.id]!.calc
+              } satisfies TownHex)
+            : null,
+          right
+            ? ({
+                id: right.id,
+                townIdx: right?.townToTown[townIdx]!,
+                calc: hexById[right.id]!.calc
+              } satisfies TownHex)
+            : null
+        ].filter((item): item is TownHex => !!item);
+
+        const isLonelyTown = hexes.length === 1;
+        const id = isLonelyTown
+          ? (`${hexId}-${townIdx}` as SingleTownId)
+          : (`${hexes.map((hex) => hex.id).join(",")}` as ConcatenatedTownIds);
+
+        if (!acc[id]) {
+          const [pos, setPos] = createSignal<{ x: number | null; y: number | null }>(
+            { x: null, y: null },
+            { equals: (prev, next) => prev.x === next.x && prev.y === next.y }
+          );
+          acc[id] = {
+            id,
+            idx: isLonelyTown ? townIdx : undefined,
+            active: false,
+            disabled: false,
+            type,
+            hexes,
+            pos,
+            setPos
+          };
+        }
+      });
 
       return acc;
-    }, {} as any);
+    },
+    {}
+  );
+}
 
-  console.log(towns);
-  // const towns = regularBoard.reduce<any>(
-  //   (acc, hexRow, x) => {
-  //     hexRow.forEach((hex, y) => {
-  //       const num = +`${x}.${y}`;
-  //       const rowLen = hexRow.length;
-  //       const prevRowLen = x - 1 < 0 ? null : regularBoard[x - 1].length;
-  //       const nextRowLen = x + 1 >= regularBoard.length ? null : regularBoard[x + 1].length;
-  //       const neighbours = getAllNeighbours({ x, y, rowLen, prevRowLen, nextRowLen });
-
-  //       // console.log(+`${x}.${y}`, neighbours);
-  //     });
-  //     return acc;
-  //   },
-  //   {
-  //     placedxTowns: {} as any
-  //   }
-  // );
-
-  return {
-    hexRows: regularBoard,
-    towns
-  };
+function getInitialState() {
+  const hexes = getHexes();
+  const towns = getTowns(hexes);
+  return { hexes, towns };
 }
 
 export default function Board() {
-  const [store, setStore] = createStore(getInitialState());
-  const [hexRows] = createSignal(regularBoard);
-  const [townsHovered, setTownsHovered] = createSignal<TownState>({});
-  const [townsActive, setTownsActive] = createSignal<TownState>({});
-  const [highlighted, setHighlighted] = createSignal<HexHighlghted>({ x: null, y: null });
+  const hexRefs = {} as Record<Hex["id"], HTMLDivElement | undefined>;
+  const townRefs = {} as Record<Town["id"], HTMLDivElement | undefined>;
+  const [state] = createSignal(getInitialState());
 
-  function getPrevRowTotal(rowIdx: number) {
-    return rowIdx - 1 < 0 ? null : hexRows()[rowIdx - 1].length;
+  const townsArray = () => Object.values(state().towns);
+
+  function hexById() {
+    return state().hexes.reduce<{ [hexId: Hex["id"]]: Hex }>((acc, hex) => {
+      acc[hex.id] = hex;
+      return acc;
+    }, {});
   }
 
-  function getNextRowTotal(rowIdx: number) {
-    return rowIdx + 1 >= hexRows().length ? null : hexRows()[rowIdx + 1].length;
+  function hexRows() {
+    const rows = state().hexes;
+    return rows.reduce<Array<typeof rows>>((acc, hex) => {
+      if (!acc[hex.row]) acc[hex.row] = [];
+      acc[hex.row]!.push(hex);
+      return acc;
+    }, []);
   }
 
-  function getHoveredTown(rowIdx: number, colIdx: number) {
-    return townsHovered()[`${rowIdx},${colIdx}`] ?? null;
-  }
+  // https://www.redblobgames.com/grids/hexagons/#basics
+  createEffect(() => {
+    state().hexes.forEach((hex) => {
+      const rect = hexRefs[hex.id]!.getBoundingClientRect();
+      const sizeToAngle = rect.height / 2;
+      const sizeToEdge = (sizeToAngle * Math.sqrt(3)) / 2;
+      const heightSection = rect.height / 4;
+      const center = { x: (rect.left + rect.right) / 2, y: (rect.top + rect.bottom) / 2 };
 
-  // TODO
-  function toggleTown(data: TownState) {}
+      hex.setCalc(() => ({
+        center,
+        sizeToAngle,
+        sizeToEdge,
+        heightSection,
+        angles: [
+          { x: center.x, y: center.y - sizeToAngle },
+          { x: center.x + sizeToEdge, y: center.y - heightSection },
+          { x: center.x + sizeToEdge, y: center.y + heightSection },
+          { x: center.x, y: center.y + sizeToAngle },
+          { x: center.x - sizeToEdge, y: center.y + heightSection },
+          { x: center.x - sizeToEdge, y: center.y - heightSection }
+        ]
+      }));
+    });
+  });
+
+  createEffect(() => {
+    console.log(state());
+    townsArray().forEach((town) => {
+      const intersectedTownsPos = town.hexes.reduce<{
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+      }>(
+        (acc, hex) => {
+          const townPos = hex.calc().angles[hex.townIdx]!;
+          acc.left = acc.left === -1 ? townPos.x : Math.min(acc.left, townPos.x);
+          acc.right = acc.right === -1 ? townPos.x : Math.max(acc.right, townPos.x);
+          acc.top = acc.top === -1 ? townPos.y : Math.min(acc.top, townPos.y);
+          acc.bottom = acc.bottom === -1 ? townPos.y : Math.max(acc.bottom, townPos.y);
+          return acc;
+        },
+        { left: -1, right: -1, top: -1, bottom: -1 }
+      );
+
+      const townRect = townRefs[town.id]!.getBoundingClientRect();
+      const townHalfWidth = townRect.width / 2;
+      const townHalfHeight = townRect.height / 2;
+      const intersectionCenterX = (intersectedTownsPos.left + intersectedTownsPos.right) / 2;
+      const intersectionCenterY = (intersectedTownsPos.top + intersectedTownsPos.bottom) / 2;
+
+      town.setPos({
+        x: intersectionCenterX - townHalfWidth,
+        y: intersectionCenterY - townHalfHeight
+      });
+    });
+
+    // townsArray().forEach((town, idx) => {
+    //   const townRect = townRefs[town.id]!.getBoundingClientRect();
+    //   const townCenterX = townRect.width / 2;
+    //   const townCenterY = townRect.height / 2;
+    //   if (idx === 0) town.setPos({ x: angle0.x - townCenterX, y: angle0.y - townCenterY });
+    //   if (idx === 1) town.setPos({ x: angle1.x - townCenterX, y: angle1.y - townCenterY });
+    //   if (idx === 2) town.setPos({ x: angle2.x - townCenterX, y: angle2.y - townCenterY });
+    //   if (idx === 3) town.setPos({ x: angle3.x - townCenterX, y: angle3.y - townCenterY });
+    //   if (idx === 4) town.setPos({ x: angle4.x - townCenterX, y: angle4.y - townCenterY });
+    //   if (idx === 5) town.setPos({ x: angle5.x - townCenterX, y: angle5.y - townCenterY });
+    // });
+    // townsArray().forEach((town, idx) => {
+    //   const townRect = townRefs[town.id]!.getBoundingClientRect();
+    //   if ([0, 1, 2, 3, 4, 5].includes(idx)) {
+    //     // console.log(town.hexes);
+    //     // Single hex town
+    //     if (town.hexes.length === 1) {
+    //       const hex = town.hexes[0]!;
+    //       const hexRect = hexRefs[hex.id]!.getBoundingClientRect();
+    //       if (town.idx === 0) {
+    //         const x = (hexRect.left + hexRect.right) / 2 - townRect.width / 2;
+    //         const y = hexRect.top - townRect.height / 2;
+    //         town.setPos({ x, y });
+    //       }
+    //     }
+    //     // Multiple hexes town
+    //     if (town.hexes.length > 1) {
+    //       const hexesRect = town.hexes.map((hex) => hexRefs[hex.id]!.getBoundingClientRect());
+    //       const hexes = hexesRect.reduce<{ left: number; right: number; top: number; bottom: number }>(
+    //         (acc, hexRect) => {
+    //           acc.left = acc.left === -1 ? hexRect.left : Math.min(acc.left, hexRect.left);
+    //           acc.right = acc.right === -1 ? hexRect.right : Math.max(acc.right, hexRect.right);
+    //           acc.top = acc.top === -1 ? hexRect.top : Math.min(acc.top, hexRect.top);
+    //           acc.bottom = acc.bottom === -1 ? hexRect.bottom : Math.max(acc.bottom, hexRect.bottom);
+    //           return acc;
+    //         },
+    //         { left: -1, right: -1, top: -1, bottom: -1 }
+    //       );
+    //       const x = (hexes.left + hexes.right) / 2 - townRect.width / 2;
+    //       const y = (hexes.top + hexes.bottom) / 2 - townRect.height / 2;
+    //       town.setPos({ x, y });
+    //     }
+    //   }
+    // });
+  });
 
   return (
-    <div class="flex scale-150 flex-col items-center justify-center gap-1">
+    <div class="flex scale-150 flex-col flex-wrap items-center justify-center gap-1">
       <Index each={hexRows()}>
-        {(hexRow, rowIdx) => (
+        {(hexRow) => (
           <div class="my-[-15px] flex gap-1">
             <Index each={hexRow()}>
-              {(hex, colIdx) => (
+              {(hex) => (
                 <Hexagon
-                  type={hex().type}
-                  x={rowIdx}
-                  y={colIdx}
-                  rowLen={hexRow().length}
-                  prevRowLen={getPrevRowTotal(rowIdx)}
-                  nextRowLen={getNextRowTotal(rowIdx)}
-                  highlighted={highlighted().x === rowIdx && highlighted().y === colIdx}
-                  townHovered={getHoveredTown(rowIdx, colIdx)}
-                  onRoadHover={setHighlighted}
-                  onTownHover={setTownsHovered}
-                  onTownClick={toggleTown}
+                  {...hex()}
+                  ref={hexRefs[hex().id]}
+                  onNeighbourHover={(id, hovered) => {
+                    state()
+                      .hexes.find((hexItem) => hexItem.id === id)
+                      ?.setHovered(hovered);
+                  }}
                 >
-                  {rowIdx}.{colIdx}
+                  {hex().id}
                 </Hexagon>
               )}
             </Index>
           </div>
         )}
       </Index>
+
+      <Portal>
+        <Index each={townsArray()}>
+          {(town) => (
+            <div
+              ref={townRefs[town().id]}
+              class="absolute h-[30px] w-[30px] rounded-full border-4 border-red-600 bg-black"
+              style={{ top: `${town().pos().y}px`, left: `${town().pos().x}px` }}
+            />
+          )}
+        </Index>
+      </Portal>
     </div>
   );
 }

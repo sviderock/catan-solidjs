@@ -1,70 +1,61 @@
 /* eslint-disable solid/reactivity */
-type BaseProps = {
-  x: number;
-  y: number;
+
+export interface GetNeighbourProps {
+  neighbourIdx: number;
+  row: number;
+  col: number;
   rowLen: number;
   prevRowLen: number | null;
   nextRowLen: number | null;
-};
-
-export type GetNeighbourProps = BaseProps & {
-  neighbourIdx: number;
-};
-
-function getCalc(x: number, y: number): HexPosition {
-  const pos = `${x}.${y}` as const;
-  const num = +pos;
-  const numFixed = num.toFixed(2);
-  return { x, y, pos, num, numFixed };
 }
 
 /**
- * - 0 neighbour = prevRowLen < rowLen ? (x+1, y) : (x-1, y)
- * - 1 neighbour = (x, y+1)
- * - 2 neighbour = nextRowLen < rowLen ? (x+1, y) : (x+1, y+1)
- * - 3 neighbour = nextRowLen < rowLen ? (x+1, y+1) : (x+1, y)
- * - 4 neighbour = (x, y-1)
- * - 5 neighbour = prevRowLen < rowLen ? (x-1, y) : (x-1, y-1)
+ * - 0 neighbour = prevRowLen < rowLen ? (row+1, col) :   (row-1, col)
+ * - 1 neighbour =                                        (row,   col+1)
+ * - 2 neighbour = nextRowLen < rowLen ? (row+1, col) :   (row+1, col+1)
+ * - 3 neighbour = nextRowLen < rowLen ? (row+1, col+1) : (row+1, col)
+ * - 4 neighbour =                                        (row,   col-1)
+ * - 5 neighbour = prevRowLen < rowLen ? (row-1, col) :   (row-1, col-1)
  */
-export function getNeighbourHex(props: GetNeighbourProps): HexPosition | null {
+export function getNeighbourHex(props: GetNeighbourProps): HexNeighbour | null {
   switch (props.neighbourIdx) {
     case 0: {
       if (props.prevRowLen === null) return null;
-      const y = props.prevRowLen > props.rowLen ? props.y + 1 : props.y;
+      const col = props.prevRowLen > props.rowLen ? props.col + 1 : props.col;
 
-      if (y >= props.prevRowLen) return null;
-      return getCalc(props.x - 1, y);
+      if (col >= props.prevRowLen) return null;
+      return { ...getCalc(props.row - 1, col), towns: [4, 3], townToTown: { 0: 4, 1: 3 } };
     }
     case 1: {
-      const y = props.y + 1;
-      if (y >= props.rowLen) return null;
-      return getCalc(props.x, y);
+      const col = props.col + 1;
+      if (col >= props.rowLen) return null;
+      return { ...getCalc(props.row, col), towns: [5, 4], townToTown: { 1: 5, 2: 4 } };
     }
     case 2: {
       if (props.nextRowLen === null) return null;
-      const y = props.nextRowLen < props.rowLen ? props.y : props.y + 1;
+      const col = props.nextRowLen < props.rowLen ? props.col : props.col + 1;
 
-      if (y >= props.nextRowLen) return null;
-      return getCalc(props.x + 1, y);
+      if (col >= props.nextRowLen) return null;
+      return { ...getCalc(props.row + 1, col), towns: [0, 5], townToTown: { 2: 0, 3: 5 } };
     }
     case 3: {
       if (props.nextRowLen === null) return null;
-      const y = props.nextRowLen < props.rowLen ? props.y - 1 : props.y;
+      const col = props.nextRowLen < props.rowLen ? props.col - 1 : props.col;
 
-      if (y < 0) return null;
-      return getCalc(props.x + 1, y);
+      if (col < 0) return null;
+      return { ...getCalc(props.row + 1, col), towns: [1, 0], townToTown: { 3: 1, 4: 0 } };
     }
     case 4: {
-      const y = props.y - 1;
-      if (y < 0) return null;
-      return getCalc(props.x, y);
+      const col = props.col - 1;
+      if (col < 0) return null;
+      return { ...getCalc(props.row, col), towns: [2, 1], townToTown: { 4: 2, 5: 1 } };
     }
     case 5: {
       if (props.prevRowLen === null) return null;
-      const y = props.prevRowLen > props.rowLen ? props.y : props.y - 1;
+      const col = props.prevRowLen > props.rowLen ? props.col : props.col - 1;
 
-      if (y < 0) return null;
-      return getCalc(props.x - 1, y);
+      if (col < 0) return null;
+      return { ...getCalc(props.row - 1, col), towns: [3, 2], townToTown: { 5: 3, 0: 2 } };
     }
 
     default:
@@ -72,15 +63,7 @@ export function getNeighbourHex(props: GetNeighbourProps): HexPosition | null {
   }
 }
 
-export function getAllNeighbours(props: BaseProps) {
-  return [0, 1, 2, 3, 4, 5].map((idx) => {
-    const neighbour = getNeighbourHex({ ...props, neighbourIdx: idx });
-    return neighbour
-      ? {
-          x: neighbour.x,
-          y: neighbour.y,
-          num: +`${neighbour.x}.${neighbour.y}`
-        }
-      : null;
-  });
+function getCalc(row: number, col: number): Omit<HexNeighbour, "towns" | "townToTown"> {
+  const id = `${row}.${col}` as const;
+  return { row, col, id };
 }
