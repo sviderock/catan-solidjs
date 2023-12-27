@@ -128,8 +128,10 @@ function getTowns(hexes: ReturnType<typeof getHexes>) {
 }
 
 function getInitialState() {
+  console.time("state");
   const hexes = getHexes();
   const towns = getTowns(hexes);
+  console.timeEnd("state");
   return { hexes, towns };
 }
 
@@ -139,13 +141,6 @@ export default function Board() {
   const [state] = createSignal(getInitialState());
 
   const townsArray = () => Object.values(state().towns);
-
-  function hexById() {
-    return state().hexes.reduce<{ [hexId: Hex["id"]]: Hex }>((acc, hex) => {
-      acc[hex.id] = hex;
-      return acc;
-    }, {});
-  }
 
   function hexRows() {
     const rows = state().hexes;
@@ -158,6 +153,7 @@ export default function Board() {
 
   // https://www.redblobgames.com/grids/hexagons/#basics
   createEffect(() => {
+    console.time("hexes_calcs");
     state().hexes.forEach((hex) => {
       const rect = hexRefs[hex.id]!.getBoundingClientRect();
       const sizeToAngle = rect.height / 2;
@@ -180,10 +176,11 @@ export default function Board() {
         ]
       }));
     });
+    console.timeEnd("hexes_calcs");
   });
 
   createEffect(() => {
-    console.log(state());
+    console.time("towns_calcs");
     townsArray().forEach((town) => {
       const intersectedTownsPos = town.hexes.reduce<{
         left: number;
@@ -213,51 +210,7 @@ export default function Board() {
         y: intersectionCenterY - townHalfHeight
       });
     });
-
-    // townsArray().forEach((town, idx) => {
-    //   const townRect = townRefs[town.id]!.getBoundingClientRect();
-    //   const townCenterX = townRect.width / 2;
-    //   const townCenterY = townRect.height / 2;
-    //   if (idx === 0) town.setPos({ x: angle0.x - townCenterX, y: angle0.y - townCenterY });
-    //   if (idx === 1) town.setPos({ x: angle1.x - townCenterX, y: angle1.y - townCenterY });
-    //   if (idx === 2) town.setPos({ x: angle2.x - townCenterX, y: angle2.y - townCenterY });
-    //   if (idx === 3) town.setPos({ x: angle3.x - townCenterX, y: angle3.y - townCenterY });
-    //   if (idx === 4) town.setPos({ x: angle4.x - townCenterX, y: angle4.y - townCenterY });
-    //   if (idx === 5) town.setPos({ x: angle5.x - townCenterX, y: angle5.y - townCenterY });
-    // });
-    // townsArray().forEach((town, idx) => {
-    //   const townRect = townRefs[town.id]!.getBoundingClientRect();
-    //   if ([0, 1, 2, 3, 4, 5].includes(idx)) {
-    //     // console.log(town.hexes);
-    //     // Single hex town
-    //     if (town.hexes.length === 1) {
-    //       const hex = town.hexes[0]!;
-    //       const hexRect = hexRefs[hex.id]!.getBoundingClientRect();
-    //       if (town.idx === 0) {
-    //         const x = (hexRect.left + hexRect.right) / 2 - townRect.width / 2;
-    //         const y = hexRect.top - townRect.height / 2;
-    //         town.setPos({ x, y });
-    //       }
-    //     }
-    //     // Multiple hexes town
-    //     if (town.hexes.length > 1) {
-    //       const hexesRect = town.hexes.map((hex) => hexRefs[hex.id]!.getBoundingClientRect());
-    //       const hexes = hexesRect.reduce<{ left: number; right: number; top: number; bottom: number }>(
-    //         (acc, hexRect) => {
-    //           acc.left = acc.left === -1 ? hexRect.left : Math.min(acc.left, hexRect.left);
-    //           acc.right = acc.right === -1 ? hexRect.right : Math.max(acc.right, hexRect.right);
-    //           acc.top = acc.top === -1 ? hexRect.top : Math.min(acc.top, hexRect.top);
-    //           acc.bottom = acc.bottom === -1 ? hexRect.bottom : Math.max(acc.bottom, hexRect.bottom);
-    //           return acc;
-    //         },
-    //         { left: -1, right: -1, top: -1, bottom: -1 }
-    //       );
-    //       const x = (hexes.left + hexes.right) / 2 - townRect.width / 2;
-    //       const y = (hexes.top + hexes.bottom) / 2 - townRect.height / 2;
-    //       town.setPos({ x, y });
-    //     }
-    //   }
-    // });
+    console.timeEnd("towns_calcs");
   });
 
   return (
