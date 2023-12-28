@@ -86,25 +86,27 @@ function getHexesById(hexes: Hex[]): { [hexId: Hex["id"]]: Hex } {
 function getTowns(hexes: ReturnType<typeof getHexes>) {
   const hexById = getHexesById(hexes);
   return hexes.reduce<{ [key: Town["id"]]: Town }>(
-    (acc, { row, col, id: hexId, type, rowLen, prevRowLen, nextRowLen, calc }) => {
+    (acc, { row, col, id: hexId, type, rowLen, prevRowLen, nextRowLen, calc, setHovered }) => {
       ORDERED_NEIGHBOURS_ARRAY.forEach(([leftIdx, rightIdx], townIdx) => {
         const left = getNeighbourHex({ neighbourIdx: leftIdx!, row, col, rowLen, prevRowLen, nextRowLen });
         const right = getNeighbourHex({ neighbourIdx: rightIdx!, row, col, rowLen, prevRowLen, nextRowLen });
 
         const hexes: Town["hexes"] = [
-          { id: hexId, townIdx, calc },
+          { id: hexId, townIdx, calc, setHovered },
           left
             ? ({
                 id: left.id,
                 townIdx: left?.townToTown[townIdx]!,
-                calc: hexById[left.id]!.calc
+                calc: hexById[left.id]!.calc,
+                setHovered: hexById[left.id]!.setHovered
               } satisfies TownHex)
             : null,
           right
             ? ({
                 id: right.id,
                 townIdx: right?.townToTown[townIdx]!,
-                calc: hexById[right.id]!.calc
+                calc: hexById[right.id]!.calc,
+                setHovered: hexById[right.id]!.setHovered
               } satisfies TownHex)
             : null
         ].filter((item): item is TownHex => !!item);
@@ -143,12 +145,19 @@ function getTowns(hexes: ReturnType<typeof getHexes>) {
 function getRoads(hexes: ReturnType<typeof getHexes>) {
   const hexById = getHexesById(hexes);
   return hexes.reduce<{ [key: Road["id"]]: Road }>(
-    (acc, { id: hexId, row, col, rowLen, prevRowLen, nextRowLen, calc }) => {
+    (acc, { id: hexId, row, col, rowLen, prevRowLen, nextRowLen, calc, setHovered }) => {
       [0, 1, 2, 3, 4, 5].forEach((neighbourIdx, roadIdx) => {
         const neighbour = getNeighbourHex({ neighbourIdx, row, col, rowLen, prevRowLen, nextRowLen });
         const hexes: Road["hexes"] = [
-          { id: hexId, roadIdx, calc },
-          neighbour ? { id: neighbour.id, roadIdx: neighbour.road, calc: hexById[neighbour.id]!.calc } : null
+          { id: hexId, roadIdx, calc, setHovered },
+          neighbour
+            ? {
+                id: neighbour.id,
+                roadIdx: neighbour.road,
+                calc: hexById[neighbour.id]!.calc,
+                setHovered: hexById[neighbour.id]?.setHovered
+              }
+            : null
         ].filter((item): item is RoadHex => !!item);
 
         const id =
@@ -353,8 +362,10 @@ export default function Board() {
           {(town) => (
             <div
               ref={townRefs[town.id]}
-              class="absolute h-[30px] w-[30px] rounded-full border-4 border-red-600 bg-black"
+              class="absolute h-[30px] w-[30px] cursor-pointer rounded-full border-4 border-red-600 bg-black transition hover:scale-110"
               style={{ top: `${town.pos().y}px`, left: `${town.pos().x}px` }}
+              onMouseOver={() => town.hexes.forEach((hex) => hex.setHovered(true))}
+              onMouseOut={() => town.hexes.forEach((hex) => hex.setHovered(false))}
             />
           )}
         </For>
@@ -363,12 +374,14 @@ export default function Board() {
           {(road) => (
             <div
               ref={roadRefs[road.id]}
-              class="absolute h-[15px] w-[50px] rounded-sm border-4 border-black bg-red-500"
+              class="absolute h-[15px] w-[50px] cursor-pointer rounded-sm border-4 border-black bg-red-500 transition hover:scale-110"
               style={{
                 top: `${road.pos().y}px`,
                 left: `${road.pos().x}px`,
                 rotate: `${road.pos().angle}deg`
               }}
+              onMouseOver={() => road.hexes.forEach((hex) => hex.setHovered(true))}
+              onMouseOut={() => road.hexes.forEach((hex) => hex.setHovered(false))}
             />
           )}
         </For>

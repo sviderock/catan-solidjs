@@ -46,8 +46,16 @@ declare global {
   type ConcatenatedTownIds =
     | `${SingleTownId},${SingleTownId}`
     | `${SingleTownId},${SingleTownId},${SingleTownId}`;
-  type TownHex = { id: Hex["id"]; townIdx: number; calc: Accessor<HexCalculations> };
+
+  type TownHex = {
+    id: Hex["id"];
+    townIdx: number;
+    calc: Accessor<HexCalculations>;
+    setHovered: Hex["setHovered"];
+  };
+
   type TownPos = { x: number | null; y: number | null };
+
   type Town = {
     id: SingleTownId | ConcatenatedTownIds;
     active: boolean;
@@ -60,8 +68,16 @@ declare global {
 
   type SingleRoadId = Id;
   type ConcatenatedRoadIds = `${SingleRoadId},${SingleRoadId}`;
-  type RoadHex = { id: Hex["id"]; roadIdx: number; calc: Accessor<HexCalculations> };
+
+  type RoadHex = {
+    id: Hex["id"];
+    roadIdx: number;
+    calc: Accessor<HexCalculations>;
+    setHovered: Hex["setHovered"];
+  };
+
   type RoadPos = { x: number | null; y: number | null; angle: number | null };
+
   type Road = {
     id: SingleRoadId | ConcatenatedRoadIds;
     active: boolean;

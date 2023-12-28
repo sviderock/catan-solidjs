@@ -19,13 +19,16 @@ export default function Hexagon(props: HexagonProps) {
   const [settlements] = createSignal<number[]>(new Array(6).fill(0));
 
   return (
-    <div ref={props.ref} class="relative" classList={{ "transition scale-[102%]": props.hovered() }}>
+    <div ref={props.ref} class="relative">
       <div
         class={`${
           HexType[props.type].color
         } flex h-[120px] w-[calc(0.8658*120px)] flex-col items-center justify-center bg-current transition [clip-path:_polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)] `}
       >
-        <span class="text-[40px] text-white">
+        <span
+          class="rounded-full p-2 text-[40px] leading-none text-white"
+          classList={{ "transition scale-105 border-2": props.hovered() }}
+        >
           <Switch fallback={HexType[props.type].icon}>
             <Match when={props.debug}>{props.id}</Match>
           </Switch>
