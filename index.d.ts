@@ -4,16 +4,26 @@ declare global {
   type Id = `${number}.${number}`;
 
   type HexCalculations = {
-    angles: Array<{ x: number; y: number }>;
     center: { x: number; y: number };
     sizeToAngle: number;
     sizeToEdge: number;
     heightSection: number;
+    angles: Array<{ x: number; y: number }>;
+    edges: Array<{
+      x1: number;
+      y1: number;
+      x2: number;
+      y2: number;
+      centerX: number;
+      centerY: number;
+      angle: number;
+    }>;
   };
 
   type HexNeighbour = Pick<Hex, "id" | "row" | "col"> & {
     towns: number[];
     townToTown: { [hexTown: number]: number };
+    road: number;
   };
 
   type Hex = {
@@ -36,17 +46,27 @@ declare global {
   type ConcatenatedTownIds =
     | `${SingleTownId},${SingleTownId}`
     | `${SingleTownId},${SingleTownId},${SingleTownId}`;
-
   type TownHex = { id: Hex["id"]; townIdx: number; calc: Accessor<HexCalculations> };
-
+  type TownPos = { x: number | null; y: number | null };
   type Town = {
     id: SingleTownId | ConcatenatedTownIds;
-    idx?: number;
     active: boolean;
     disabled: boolean;
     type: Hex["type"];
     hexes: TownHex[];
-    pos: Accessor<{ x: number | null; y: number | null }>;
-    setPos: Setter<{ x: number | null; y: number | null }>;
+    pos: Accessor<TownPos>;
+    setPos: Setter<TownPos>;
+  };
+
+  type SingleRoadId = Id;
+  type ConcatenatedRoadIds = `${SingleRoadId},${SingleRoadId}`;
+  type RoadHex = { id: Hex["id"]; roadIdx: number; calc: Accessor<HexCalculations> };
+  type RoadPos = { x: number | null; y: number | null; angle: number | null };
+  type Road = {
+    id: SingleRoadId | ConcatenatedRoadIds;
+    active: boolean;
+    hexes: RoadHex[];
+    pos: Accessor<RoadPos>;
+    setPos: Setter<RoadPos>;
   };
 }
