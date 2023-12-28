@@ -29,7 +29,7 @@ declare global {
   type Hex = {
     type: "brick" | "lumber" | "ore" | "grain" | "wool";
     idx: number;
-    id: `${number}.${number}`;
+    id: Id;
     row: number;
     col: number;
     rowLen: number;
@@ -42,47 +42,46 @@ declare global {
     setCalc: Setter<HexCalculations>;
   };
 
-  type SingleTownId = Id;
-  type ConcatenatedTownIds =
-    | `${SingleTownId},${SingleTownId}`
-    | `${SingleTownId},${SingleTownId},${SingleTownId}`;
+  type SingleStructureId<T extends TownType | RoadType> = `${T}-${Id}-${number}`;
+  type ConcatenatedStructureIds<T extends TownType | RoadType> =
+    | `${SingleStructureId<T>}|${SingleStructureId<T>}`
+    | `${SingleStructureId<T>}|${SingleStructureId<T>}|${SingleStructureId<T>}`;
 
-  type TownHex = {
-    id: Hex["id"];
-    townIdx: number;
-    calc: Accessor<HexCalculations>;
-    setHovered: Hex["setHovered"];
-  };
+  type StructureHex<T extends TownType | RoadType> = T extends TownType
+    ? { hex: Hex; townIdx: number; roadIdx?: never }
+    : { hex: Hex; townIdx?: never; roadIdx: number };
+
+  type TownType = "town";
+  type RoadType = "road";
+
+  type TownId = SingleStructureId<TownType> | ConcatenatedStructureIds<TownType>;
+  type RoadId = SingleStructureId<RoadType> | ConcatenatedStructureIds<RoadType>;
 
   type TownPos = { x: number | null; y: number | null };
+  type RoadPos = { x: number | null; y: number | null; angle: number | null };
 
-  type Town = {
-    id: SingleTownId | ConcatenatedTownIds;
-    active: boolean;
+  type TownHex = StructureHex<"town">;
+  type RoadHex = StructureHex<"road">;
+
+  type BaseStructureProps = { active: boolean };
+
+  type Town = BaseStructureProps & {
+    id: TownId;
+    type: TownType;
     disabled: boolean;
-    type: Hex["type"];
+    level: "settlement" | "city";
     hexes: TownHex[];
     pos: Accessor<TownPos>;
     setPos: Setter<TownPos>;
   };
 
-  type SingleRoadId = Id;
-  type ConcatenatedRoadIds = `${SingleRoadId},${SingleRoadId}`;
-
-  type RoadHex = {
-    id: Hex["id"];
-    roadIdx: number;
-    calc: Accessor<HexCalculations>;
-    setHovered: Hex["setHovered"];
-  };
-
-  type RoadPos = { x: number | null; y: number | null; angle: number | null };
-
-  type Road = {
-    id: SingleRoadId | ConcatenatedRoadIds;
-    active: boolean;
+  type Road = BaseStructureProps & {
+    id: RoadId;
+    type: RoadType;
     hexes: RoadHex[];
     pos: Accessor<RoadPos>;
     setPos: Setter<RoadPos>;
   };
+
+  type Structure = Town | Road;
 }

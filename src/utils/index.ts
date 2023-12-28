@@ -6,3 +6,7 @@ export function getRandomType() {
   const idx = Math.floor(Math.random() * hexTypes.length);
   return hexTypes[idx]!;
 }
+
+export function matches<S extends T, T = unknown>(e: T, predicate: (e: T) => e is S): S | false {
+  return predicate(e) ? e : false;
+}

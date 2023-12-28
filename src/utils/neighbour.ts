@@ -1,14 +1,5 @@
 /* eslint-disable solid/reactivity */
 
-export interface GetNeighbourProps {
-  neighbourIdx: number;
-  row: number;
-  col: number;
-  rowLen: number;
-  prevRowLen: number | null;
-  nextRowLen: number | null;
-}
-
 /**
  * - 0 neighbour = prevRowLen < rowLen ? (row+1, col) :   (row-1, col)
  * - 1 neighbour =                                        (row,   col+1)
@@ -17,7 +8,11 @@ export interface GetNeighbourProps {
  * - 4 neighbour =                                        (row,   col-1)
  * - 5 neighbour = prevRowLen < rowLen ? (row-1, col) :   (row-1, col-1)
  */
-export function getNeighbourHex(props: GetNeighbourProps): HexNeighbour | null {
+export function getNeighbourHex<
+  T extends Pick<Hex, "row" | "col" | "rowLen" | "prevRowLen" | "nextRowLen"> & {
+    neighbourIdx: number;
+  }
+>(props: T): HexNeighbour | null {
   switch (props.neighbourIdx) {
     case 0: {
       if (props.prevRowLen === null) return null;
