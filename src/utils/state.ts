@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { regularBoard } from "../boardArrays";
 import { getNeighbourHex } from "./neighbour";
-import { getStructureId } from "./structureId";
+import { getSingleStructureId, getStructureId } from "./structureId";
 
 const ORDERED_NEIGHBOURS_ARRAY = [
   [5, 0],
@@ -10,7 +10,16 @@ const ORDERED_NEIGHBOURS_ARRAY = [
   [2, 3],
   [3, 4],
   [4, 5]
-];
+] as const;
+
+const CLOSEST_OWN_TOWNS_IDX: Record<number, number[]> = {
+  0: [5, 1],
+  1: [0, 2],
+  2: [1, 3],
+  3: [2, 4],
+  4: [3, 5],
+  5: [4, 0]
+};
 
 function getHexes() {
   return regularBoard.reduce(
@@ -73,8 +82,8 @@ function getHexes() {
 }
 
 function getStructures(hexes: ReturnType<typeof getHexes>) {
-  return hexes.array.reduce(
-    (acc, hex, idx) => {
+  const structures = hexes.array.reduce(
+    (acc, hex) => {
       ORDERED_NEIGHBOURS_ARRAY.forEach(([leftIdx, rightIdx], townIdx) => {
         const leftHex = getNeighbourHex({ neighbourIdx: leftIdx!, ...hex });
         const rightHex = getNeighbourHex({ neighbourIdx: rightIdx!, ...hex });
@@ -104,6 +113,8 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
         });
 
         if (!acc.byId[townId]) {
+          const [active, setActive] = createSignal(false);
+          const [disabled, setDisabled] = createSignal(false);
           const [pos, setPos] = createSignal<TownPos>(
             { x: null, y: null },
             { equals: (prev, next) => prev.x === next.x && prev.y === next.y }
@@ -113,11 +124,14 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
             type: "town",
             level: "settlement",
             id: townId,
-            active: false,
-            disabled: false,
             hexes: townHexes,
+            closestTowns: [],
             pos,
-            setPos
+            setPos,
+            active,
+            setActive,
+            disabled,
+            setDisabled
           };
 
           acc.byId[townId] = town;
@@ -125,6 +139,7 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
         }
 
         if (!acc.byId[roadId]) {
+          const [active, setActive] = createSignal(false);
           const [pos, setPos] = createSignal<RoadPos>(
             { x: null, y: null, angle: null },
             {
@@ -136,10 +151,11 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
           const road: Road = {
             type: "road",
             id: roadId,
-            active: false,
             hexes: roadHexes,
             pos,
-            setPos
+            setPos,
+            active,
+            setActive
           };
 
           acc.byId[roadId] = road;
@@ -154,6 +170,28 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
       byId: {} as { [key: Structure["id"]]: Structure }
     }
   );
+
+  const townKeys = Object.keys(structures.byId).filter((key) => key.startsWith("town"));
+  structures.array.forEach((structure) => {
+    if (structure.type !== "town") return;
+
+    const townsIdx = structure.hexes.flatMap((hex) => {
+      return CLOSEST_OWN_TOWNS_IDX[hex.townIdx]?.map((idx) => {
+        return getSingleStructureId({ type: "town", hexId: hex.hex.id, idx });
+      });
+    });
+
+    structure.closestTowns = townKeys
+      .filter((townKey) => {
+        return townsIdx.some((townIdx) => townKey.includes(townIdx as string));
+      })
+      .reduce<Town["closestTowns"]>((acc, townId) => {
+        acc.push(structures.byId[townId as TownId] as Town);
+        return acc;
+      }, []);
+  });
+
+  return structures;
 }
 
 export function getInitialState() {

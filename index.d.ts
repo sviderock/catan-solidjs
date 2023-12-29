@@ -63,26 +63,28 @@ declare global {
   type TownHex = StructureHex<"town">;
   type RoadHex = StructureHex<"road">;
 
-  type BaseStructureProps = { active: boolean };
-
-  type StructurePos = TownPos | RoadPos;
-
-  type Town = BaseStructureProps & {
+  type Town = {
     id: TownId;
     type: TownType;
-    disabled: boolean;
     level: "settlement" | "city";
     hexes: TownHex[];
+    closestTowns: Town[];
     pos: Accessor<TownPos>;
     setPos: Setter<TownPos>;
+    active: Accessor<boolean>;
+    setActive: Setter<boolean>;
+    disabled: Accessor<boolean>;
+    setDisabled: Setter<boolean>;
   };
 
-  type Road = BaseStructureProps & {
+  type Road = {
     id: RoadId;
     type: RoadType;
     hexes: RoadHex[];
     pos: Accessor<RoadPos>;
     setPos: Setter<RoadPos>;
+    active: Accessor<boolean>;
+    setActive: Setter<boolean>;
   };
 
   type Structure = Town | Road;

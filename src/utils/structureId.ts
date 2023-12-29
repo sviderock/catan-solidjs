@@ -4,7 +4,7 @@ type ConcatenatedProps<T extends Structure["type"]> = BaseProps<T> & { hexes: St
 
 type Props<T extends Structure["type"]> = SingleProps<T> & ConcatenatedProps<T>;
 
-function getSingleStructureId<
+export function getSingleStructureId<
   T extends Structure["type"],
   P extends SingleProps<T>,
   R = T extends TownType ? SingleStructureId<TownType> : SingleStructureId<RoadType>

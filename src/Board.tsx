@@ -1,4 +1,4 @@
-import { For, Match, Switch, createSignal, onMount, type Ref } from "solid-js";
+import { For, Match, Switch, createSignal, onMount, type Ref, batch } from "solid-js";
 import Hexagon from "./Hexagon";
 import { matches } from "./utils";
 import { calculateRoad } from "./utils/calculateRoad";
@@ -11,6 +11,7 @@ export default function Board() {
   const [state] = createSignal(getInitialState());
 
   onMount(() => {
+    console.log(state());
     console.time("calculations");
     state().hexes.array.forEach((hex) => {
       const calc = calculateHex(refs[hex.id]!);
@@ -92,10 +93,26 @@ function Town(props: Town & { ref: Ref<HTMLDivElement> }) {
   return (
     <div
       ref={props.ref}
-      class="absolute h-[20px] w-[20px] cursor-pointer rounded-full border-2 border-red-600 bg-black transition hover:scale-110"
+      class="absolute h-[20px] w-[20px] cursor-pointer rounded-full border-2 transition hover:scale-110"
+      classList={{
+        "bg-green-300 border-green-900": !props.active() && !props.disabled(),
+        "bg-indigo-500 border-indigo-900": props.active(),
+        "bg-red-600 border-red-900 cursor-not-allowed": props.disabled()
+      }}
       style={{ top: `${props.pos().y}px`, left: `${props.pos().x}px` }}
-      onMouseOver={() => props.hexes.forEach(({ hex }) => hex.setHovered(true))}
+      onMouseOver={() => {
+        if (props.disabled()) return;
+        props.hexes.forEach(({ hex }) => hex.setHovered(true));
+      }}
       onMouseOut={() => props.hexes.forEach(({ hex }) => hex.setHovered(false))}
+      onClick={() => {
+        if (props.disabled() || props.active()) return;
+
+        batch(() => {
+          props.setActive(true);
+          props.closestTowns.forEach((town) => town.setDisabled(true));
+        });
+      }}
     />
   );
 }
@@ -104,14 +121,22 @@ function Road(props: Road & { ref: Ref<HTMLDivElement> }) {
   return (
     <div
       ref={props.ref}
-      class="absolute h-[10px] w-[30px] cursor-pointer rounded-sm border-2 border-black bg-red-500 transition hover:scale-110"
+      class="absolute h-[10px] w-[30px] cursor-pointer rounded-sm border-2  transition hover:scale-110"
       style={{
         top: `${props.pos().y}px`,
         left: `${props.pos().x}px`,
         rotate: `${props.pos().angle}deg`
       }}
+      classList={{
+        "border-green-900 bg-green-100": !props.active(),
+        "bg-indigo-300 border-indigo-500": props.active()
+      }}
       onMouseOver={() => props.hexes.forEach(({ hex }) => hex.setHovered(true))}
       onMouseOut={() => props.hexes.forEach(({ hex }) => hex.setHovered(false))}
+      onClick={() => {
+        if (props.active()) return;
+        props.setActive(true);
+      }}
     />
   );
 }

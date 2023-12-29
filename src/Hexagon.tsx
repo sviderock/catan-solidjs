@@ -27,7 +27,7 @@ export default function Hexagon(props: HexagonProps) {
       >
         <span
           class="rounded-full p-2 text-[40px] leading-none text-white"
-          classList={{ "transition scale-105 border-2": props.hovered() }}
+          classList={{ "transition scale-110 drop-shadow-lg": props.hovered() }}
         >
           <Switch fallback={HexType[props.type].icon}>
             <Match when={props.debug}>{props.id}</Match>
