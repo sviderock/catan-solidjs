@@ -1,4 +1,4 @@
-import { Index, createSignal, type JSX, type Ref, Show, Switch, Match } from "solid-js";
+import { Index, Match, Show, Switch, createSignal, type JSX, type Ref } from "solid-js";
 
 const HexType = {
   brick: { color: "text-red-400", icon: "🧱" },

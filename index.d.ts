@@ -65,6 +65,8 @@ declare global {
 
   type BaseStructureProps = { active: boolean };
 
+  type StructurePos = TownPos | RoadPos;
+
   type Town = BaseStructureProps & {
     id: TownId;
     type: TownType;
