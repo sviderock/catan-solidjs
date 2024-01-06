@@ -2,6 +2,12 @@ import { type Accessor, type Setter } from "solid-js";
 
 declare global {
   type Id = `${number}.${number}`;
+  type IndexedId = SingleIndexedId | MultiIndexedId;
+  type SingleIndexedId = `${Id}-${number}`;
+  type MultiIndexedId =
+    | `${SingleIndexedId}|${SingleIndexedId}`
+    | `${SingleIndexedId}|${SingleIndexedId}|${SingleIndexedId}`;
+  type ConstructedIdOfType<T extends string> = `${T}:${IndexedId}`;
 
   type HexCalculations = {
     center: { x: number; y: number };
@@ -35,57 +41,65 @@ declare global {
     rowLen: number;
     prevRowLen: number | null;
     nextRowLen: number | null;
-    neighbours: (HexNeighbour | null)[];
+    siblings: Array<Hex | null>;
+    towns: Town[];
+    roads: Road[];
     hovered: Accessor<boolean>;
     setHovered: Setter<boolean>;
     calc: Accessor<HexCalculations>;
     setCalc: Setter<HexCalculations>;
   };
 
-  type SingleStructureId<T extends TownType | RoadType> = `${T}-${Id}-${number}`;
-  type ConcatenatedStructureIds<T extends TownType | RoadType> =
-    | `${SingleStructureId<T>}|${SingleStructureId<T>}`
-    | `${SingleStructureId<T>}|${SingleStructureId<T>}|${SingleStructureId<T>}`;
-
-  type StructureHex<T extends TownType | RoadType> = T extends TownType
-    ? { hex: Hex; townIdx: number; roadIdx?: never }
-    : { hex: Hex; townIdx?: never; roadIdx: number };
-
   type TownType = "town";
   type RoadType = "road";
 
-  type TownId = SingleStructureId<TownType> | ConcatenatedStructureIds<TownType>;
-  type RoadId = SingleStructureId<RoadType> | ConcatenatedStructureIds<RoadType>;
+  type TownLevel = "settlement" | "city";
+
+  type TownId = ConstructedIdOfType<TownType>;
+  type RoadId = ConstructedIdOfType<RoadType>;
 
   type TownPos = { x: number | null; y: number | null };
   type RoadPos = { x: number | null; y: number | null; angle: number | null };
 
-  type TownHex = StructureHex<"town">;
-  type RoadHex = StructureHex<"road">;
-
-  type Town = {
-    id: TownId;
-    type: TownType;
-    level: "settlement" | "city";
-    hexes: TownHex[];
-    closestTowns: Town[];
-    pos: Accessor<TownPos>;
-    setPos: Setter<TownPos>;
+  type StructureBaseProps = {
     active: Accessor<boolean>;
     setActive: Setter<boolean>;
+    available: Accessor<boolean>;
+    setAvailable: Setter<boolean>;
+  };
+
+  type Town = StructureBaseProps & {
+    id: TownId;
+    type: TownType;
+    hexes: Array<{ hex: Hex; townIdx: number; roadIdx?: never }>;
+    closestTowns: Town[];
+    roads: Road[];
+    pos: Accessor<TownPos>;
+    setPos: Setter<TownPos>;
+    level: Accessor<TownLevel>;
+    setLevel: Setter<TownLevel>;
     disabled: Accessor<boolean>;
     setDisabled: Setter<boolean>;
   };
 
-  type Road = {
+  type Road = StructureBaseProps & {
     id: RoadId;
     type: RoadType;
-    hexes: RoadHex[];
+    hexes: Array<{ hex: Hex; townIdx?: never; roadIdx: number }>;
+    towns: Town[];
+    roads: Road[];
     pos: Accessor<RoadPos>;
     setPos: Setter<RoadPos>;
-    active: Accessor<boolean>;
-    setActive: Setter<boolean>;
   };
 
   type Structure = Town | Road;
+  type StructureMap = { [key: Structure["id"]]: Structure };
+
+  type Player = {};
+
+  type Game = {
+    roads: number;
+    settlements: number;
+    cities: number;
+  };
 }

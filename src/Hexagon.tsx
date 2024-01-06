@@ -8,7 +8,7 @@ const HexType = {
   wool: { color: "text-lime-600", icon: "🐑" }
 } satisfies Record<HexagonProps["type"], { color: string; icon: string }>;
 
-export type HexagonProps = Hex & {
+type HexagonProps = Hex & {
   debug?: boolean;
   ref: Ref<HTMLDivElement | undefined>;
   children?: JSX.Element;
@@ -23,10 +23,10 @@ export default function Hexagon(props: HexagonProps) {
       <div
         class={`${
           HexType[props.type].color
-        } flex h-[120px] w-[calc(0.8658*120px)] flex-col items-center justify-center bg-current transition [clip-path:_polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)] `}
+        } flex h-[--hex-size] w-[calc(0.8658*var(--hex-size))] flex-col items-center justify-center bg-current drop-shadow-[0_0_0.75rem_crimson] transition [clip-path:_polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)] `}
       >
         <span
-          class="rounded-full p-2 text-[40px] leading-none text-white"
+          class="rounded-full p-2 text-[length:calc((var(--hex-size)/3))] leading-none text-white"
           classList={{ "transition scale-110 drop-shadow-lg": props.hovered() }}
         >
           <Switch fallback={HexType[props.type].icon}>
@@ -60,7 +60,7 @@ export default function Hexagon(props: HexagonProps) {
           )}
         </Index>
 
-        <Index each={props.neighbours}>
+        <Index each={props.siblings}>
           {(neighbour, idx) => (
             <Show when={neighbour()}>
               <div

@@ -1,35 +1,19 @@
 import { createSignal } from "solid-js";
-import { regularBoard } from "../boardArrays";
+import { regularBoard } from "./boardArrays";
 import { getNeighbourHex } from "./neighbour";
-import { getSingleStructureId, getStructureId } from "./structureId";
+import { getStructureId, type GetStructureId } from "./utils";
 
-const ORDERED_NEIGHBOURS_ARRAY = [
-  [5, 0],
-  [0, 1],
-  [1, 2],
-  [2, 3],
-  [3, 4],
-  [4, 5]
-] as const;
-
-const CLOSEST_OWN_TOWNS_IDX: Record<number, number[]> = {
-  0: [5, 1],
-  1: [0, 2],
-  2: [1, 3],
-  3: [2, 4],
-  4: [3, 5],
-  5: [4, 0]
-};
+function idx(i: number) {
+  if (i > 5) return 0;
+  if (i < 0) return 5;
+  return i;
+}
 
 function getHexes() {
-  return regularBoard.reduce(
+  const hexes = regularBoard.reduce(
     (acc, hexRow, rowIdx) => {
       hexRow.forEach(({ type }, colIdx) => {
-        const id = `${rowIdx}.${colIdx}` as const;
-        const prevRowLen = rowIdx - 1 < 0 ? null : regularBoard[rowIdx - 1]!.length;
-        const nextRowLen =
-          rowIdx + 1 >= regularBoard.length ? null : regularBoard[rowIdx + 1]!.length;
-        const rowLen = hexRow.length;
+        const id: Hex["id"] = `${rowIdx}.${colIdx}`;
         const [hovered, setHovered] = createSignal(false);
         const [calc, setCalc] = createSignal<HexCalculations>({
           angles: [],
@@ -39,30 +23,22 @@ function getHexes() {
           sizeToEdge: -1,
           edges: []
         });
-
         const hex: Hex = {
+          id,
+          idx: rowIdx + colIdx,
+          type,
           row: rowIdx,
           col: colIdx,
-          idx: rowIdx + colIdx,
-          id: id,
-          type: type,
           rowLen: hexRow.length,
           prevRowLen: rowIdx - 1 < 0 ? null : regularBoard[rowIdx - 1]!.length,
           nextRowLen: rowIdx + 1 >= regularBoard.length ? null : regularBoard[rowIdx + 1]!.length,
+          siblings: [],
+          towns: [],
+          roads: [],
           hovered,
           setHovered,
           calc,
-          setCalc,
-          neighbours: [0, 1, 2, 3, 4, 5].map((idx) => {
-            return getNeighbourHex({
-              neighbourIdx: idx,
-              row: rowIdx,
-              col: colIdx,
-              rowLen,
-              prevRowLen,
-              nextRowLen
-            });
-          })
+          setCalc
         };
 
         acc.array.push(hex);
@@ -70,7 +46,6 @@ function getHexes() {
         acc.layout[rowIdx] ||= [];
         acc.layout[rowIdx]![colIdx] = hex;
       });
-
       return acc;
     },
     {
@@ -79,119 +54,177 @@ function getHexes() {
       layout: [] as Hex[][]
     }
   );
+
+  hexes.array.forEach((hex) => {
+    hex.siblings = [0, 1, 2, 3, 4, 5].map((idx) => {
+      const neighbour = getNeighbourHex({ neighbourIdx: idx, ...hex });
+      return neighbour ? hexes.byId[neighbour.id]! : null;
+    });
+  });
+
+  return hexes;
+}
+
+function createTown(ids: GetStructureId<"town">, hexes: Town["hexes"]): Town {
+  const [active, setActive] = createSignal(false);
+  const [disabled, setDisabled] = createSignal(false);
+  const [available, setAvailable] = createSignal(false);
+  const [level, setLevel] = createSignal<TownLevel>("settlement");
+  const [pos, setPos] = createSignal<TownPos>(
+    { x: null, y: null },
+    { equals: (prev, next) => prev.x === next.x && prev.y === next.y }
+  );
+
+  return {
+    type: "town",
+    id: ids.id,
+    closestTowns: [],
+    roads: [],
+    hexes,
+    pos,
+    setPos,
+    active,
+    setActive,
+    level,
+    setLevel,
+    disabled,
+    setDisabled,
+    available,
+    setAvailable
+  };
+}
+
+function createRoad(ids: GetStructureId<"road">, hexes: Road["hexes"]): Road {
+  const [active, setActive] = createSignal(false);
+  const [available, setAvailable] = createSignal(false);
+  const [pos, setPos] = createSignal<RoadPos>(
+    { x: null, y: null, angle: null },
+    { equals: (prev, next) => prev.x === next.x && prev.y === next.y && prev.angle === next.angle }
+  );
+
+  return {
+    type: "road",
+    id: ids.id,
+    towns: [],
+    roads: [],
+    hexes,
+    pos,
+    setPos,
+    active,
+    setActive,
+    available,
+    setAvailable
+  };
 }
 
 function getStructures(hexes: ReturnType<typeof getHexes>) {
   const structures = hexes.array.reduce(
     (acc, hex) => {
-      ORDERED_NEIGHBOURS_ARRAY.forEach(([leftIdx, rightIdx], townIdx) => {
-        const leftHex = getNeighbourHex({ neighbourIdx: leftIdx!, ...hex });
-        const rightHex = getNeighbourHex({ neighbourIdx: rightIdx!, ...hex });
+      [0, 1, 2, 3, 4, 5].forEach((sideIdx) => {
+        const leftHex = getNeighbourHex({ neighbourIdx: idx(sideIdx - 1), ...hex });
+        const rightHex = getNeighbourHex({ neighbourIdx: idx(sideIdx), ...hex });
 
-        const townHexes: Town["hexes"] = [{ hex, townIdx }];
-        const roadHexes: Road["hexes"] = [{ hex, roadIdx: rightIdx! }];
+        const townHexes: Town["hexes"] = [{ hex, townIdx: sideIdx }];
+        const roadHexes: Road["hexes"] = [{ hex, roadIdx: sideIdx }];
 
         if (leftHex) {
-          townHexes.push({ hex: hexes.byId[leftHex.id]!, townIdx: leftHex.townToTown[townIdx]! });
+          townHexes.push({ hex: hexes.byId[leftHex.id]!, townIdx: leftHex.townToTown[sideIdx]! });
         }
         if (rightHex) {
-          townHexes.push({ hex: hexes.byId[rightHex.id]!, townIdx: rightHex.townToTown[townIdx]! });
+          townHexes.push({ hex: hexes.byId[rightHex.id]!, townIdx: rightHex.townToTown[sideIdx]! });
           roadHexes.push({ hex: hexes.byId[rightHex.id]!, roadIdx: rightHex.road });
         }
 
-        const townId = getStructureId({
-          type: "town",
-          hexId: hex.id,
-          idx: townIdx,
-          hexes: townHexes
-        });
-        const roadId = getStructureId({
-          type: "road",
-          hexId: hex.id,
-          idx: rightIdx!,
-          hexes: roadHexes
-        });
+        const townIds = getStructureId({ type: "town", hexes: townHexes });
+        const roadIds = getStructureId({ type: "road", hexes: roadHexes });
+        const town = createTown(townIds, townHexes);
+        const road = createRoad(roadIds, roadHexes);
 
-        if (!acc.byId[townId]) {
-          const [active, setActive] = createSignal(false);
-          const [disabled, setDisabled] = createSignal(false);
-          const [pos, setPos] = createSignal<TownPos>(
-            { x: null, y: null },
-            { equals: (prev, next) => prev.x === next.x && prev.y === next.y }
-          );
-
-          const town: Town = {
-            type: "town",
-            level: "settlement",
-            id: townId,
-            hexes: townHexes,
-            closestTowns: [],
-            pos,
-            setPos,
-            active,
-            setActive,
-            disabled,
-            setDisabled
-          };
-
-          acc.byId[townId] = town;
+        if (!acc.byId[townIds.id]) {
+          acc.byId[townIds.id] = town;
           acc.array.push(town);
+          acc.keys.towns.push(townIds.id);
         }
 
-        if (!acc.byId[roadId]) {
-          const [active, setActive] = createSignal(false);
-          const [pos, setPos] = createSignal<RoadPos>(
-            { x: null, y: null, angle: null },
-            {
-              equals: (prev, next) =>
-                prev.x === next.x && prev.y === next.y && prev.angle === next.angle
-            }
-          );
-
-          const road: Road = {
-            type: "road",
-            id: roadId,
-            hexes: roadHexes,
-            pos,
-            setPos,
-            active,
-            setActive
-          };
-
-          acc.byId[roadId] = road;
+        if (!acc.byId[roadIds.id]) {
+          acc.byId[roadIds.id] = road;
           acc.array.push(road);
+          acc.keys.roads.push(roadIds.id);
         }
+
+        hex.towns.push(town);
+        hex.roads.push(road);
       });
 
       return acc;
     },
     {
       array: [] as Structure[],
-      byId: {} as { [key: Structure["id"]]: Structure }
+      byId: {} as StructureMap,
+      keys: {
+        towns: [] as TownId[],
+        roads: [] as RoadId[]
+      }
     }
   );
 
-  const townKeys = Object.keys(structures.byId).filter((key) => key.startsWith("town"));
   structures.array.forEach((structure) => {
-    if (structure.type !== "town") return;
+    if (structure.type === "town") {
+      processClosestTowns(structure, structures.keys.towns, structures.byId);
+    }
 
-    const townsIdx = structure.hexes.flatMap((hex) => {
-      return CLOSEST_OWN_TOWNS_IDX[hex.townIdx]?.map((idx) => {
-        return getSingleStructureId({ type: "town", hexId: hex.hex.id, idx });
-      });
-    });
+    if (structure.type === "road") {
+      processBetweenTowns(structure, structures.keys.towns, structures.byId);
+      structure.towns.forEach((town) => town.roads.push(structure));
+    }
+  });
 
-    structure.closestTowns = townKeys
-      .filter((townKey) => {
-        return townsIdx.some((townIdx) => townKey.includes(townIdx as string));
-      })
-      .reduce<Town["closestTowns"]>((acc, townId) => {
-        acc.push(structures.byId[townId as TownId] as Town);
-        return acc;
-      }, []);
+  structures.array.forEach((structure) => {
+    if (structure.type === "road") {
+      const roads = structure.towns
+        .flatMap((town) => town.roads)
+        .filter((road) => road.id !== structure.id);
+      structure.roads.push(...roads);
+    }
   });
 
   return structures;
+}
+
+function processClosestTowns(
+  town: Town,
+  townKeys: TownId[],
+  byId: { [key: Structure["id"]]: Structure }
+) {
+  const townsIdx = town.hexes.flatMap((hex) => [
+    `${hex.hex.id}-${idx(hex.townIdx - 1)}`,
+    `${hex.hex.id}-${idx(hex.townIdx + 1)}`
+  ]);
+
+  town.closestTowns = townKeys
+    .filter((townKey) => townsIdx.some((townIdx) => townKey.includes(townIdx)))
+    .reduce<Town["closestTowns"]>((acc, townId) => {
+      acc.push(byId[townId]! as Town);
+      return acc;
+    }, []);
+}
+
+function processBetweenTowns(
+  road: Road,
+  townKeys: TownId[],
+  byId: { [key: Structure["id"]]: Structure }
+) {
+  const roadsIdx = road.hexes.flatMap((hex) => [
+    `${hex.hex.id}-${idx(hex.roadIdx)}`,
+    `${hex.hex.id}-${idx(hex.roadIdx + 1)}`
+  ]);
+
+  road.towns = townKeys
+    .filter((townKey) => roadsIdx.some((townIdx) => townKey.includes(townIdx)))
+    .reduce<Road["towns"]>((acc, townId) => {
+      acc.push(byId[townId]! as Town);
+      return acc;
+    }, []);
 }
 
 export function getInitialState() {
