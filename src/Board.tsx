@@ -9,6 +9,7 @@ import { Limit } from "./constants";
 import { calculateHex, calculateRoad, calculateTown } from "./utils/calculations";
 import { getInitialState } from "./utils/state";
 import { matches } from "./utils/utils";
+import Die from "./Die";
 
 export default function Board() {
   const refs = {} as Record<Hex["id"] | Structure["id"], HTMLDivElement | undefined>;
@@ -153,16 +154,16 @@ export default function Board() {
           return { phase: "game" };
         }
 
+        // placing second road
         if (player.roads().length === 2 && game.currentPlayer <= lastPlayer) {
           return { currentPlayer: game.currentPlayer - 1 };
         }
 
+        // keep turn on last user in order to start placing second settlement
         return { currentPlayer: isLastPlayer ? lastPlayer : game.currentPlayer + 1 };
       }
 
-      return {
-        currentPlayer: isLastPlayer ? 0 : game.currentPlayer + 1
-      };
+      return { currentPlayer: isLastPlayer ? 0 : game.currentPlayer + 1 };
     });
   }
 
@@ -244,6 +245,8 @@ export default function Board() {
                         return;
                       }
 
+                      if (occupied(road().id) && occupiedBy(road().id) !== currentPlayer()) return;
+
                       if (currentPlayerStats().roads === Limit.Roads) return;
                       addRoad(road());
                     });
@@ -284,6 +287,12 @@ export default function Board() {
           </div>
         </Portal>
       </Show> */}
+
+      <Portal>
+        <div class="fixed bottom-[200px] right-[200px]">
+          <Die />
+        </div>
+      </Portal>
     </div>
   );
 }
