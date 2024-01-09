@@ -2,6 +2,7 @@ import { createSignal } from "solid-js";
 import { regularBoard } from "./boardArrays";
 import { getNeighbourHex } from "./neighbour";
 import { getStructureId, type GetStructureId } from "./utils";
+import { Colors } from "../constants";
 
 function idx(i: number) {
   if (i > 5) return 0;
@@ -66,9 +67,6 @@ function getHexes() {
 }
 
 function createTown(ids: GetStructureId<"town">, hexes: Town["hexes"]): Town {
-  const [active, setActive] = createSignal(false);
-  const [disabled, setDisabled] = createSignal(false);
-  const [available, setAvailable] = createSignal(false);
   const [level, setLevel] = createSignal<TownLevel>("settlement");
   const [pos, setPos] = createSignal<TownPos>(
     { x: null, y: null },
@@ -83,20 +81,12 @@ function createTown(ids: GetStructureId<"town">, hexes: Town["hexes"]): Town {
     hexes,
     pos,
     setPos,
-    active,
-    setActive,
     level,
-    setLevel,
-    disabled,
-    setDisabled,
-    available,
-    setAvailable
+    setLevel
   };
 }
 
 function createRoad(ids: GetStructureId<"road">, hexes: Road["hexes"]): Road {
-  const [active, setActive] = createSignal(false);
-  const [available, setAvailable] = createSignal(false);
   const [pos, setPos] = createSignal<RoadPos>(
     { x: null, y: null, angle: null },
     { equals: (prev, next) => prev.x === next.x && prev.y === next.y && prev.angle === next.angle }
@@ -109,11 +99,7 @@ function createRoad(ids: GetStructureId<"road">, hexes: Road["hexes"]): Road {
     roads: [],
     hexes,
     pos,
-    setPos,
-    active,
-    setActive,
-    available,
-    setAvailable
+    setPos
   };
 }
 
@@ -227,10 +213,32 @@ function processBetweenTowns(
     }, []);
 }
 
-export function getInitialState() {
+function getPlayerData() {
+  const [towns, setTowns] = createSignal<Town[]>([]);
+  const [roads, setRoads] = createSignal<Road[]>([]);
+  return { towns, setTowns, roads, setRoads };
+}
+
+function getGame(): State["game"] {
+  const players: Player[] = [
+    { name: "Player 1", color: Colors[0]!, ...getPlayerData() },
+    { name: "Player 2", color: Colors[1]!, ...getPlayerData() },
+    { name: "Player 3", color: Colors[2]!, ...getPlayerData() },
+    { name: "Player 4", color: Colors[3]!, ...getPlayerData() }
+  ];
+
+  return {
+    phase: "setup",
+    players,
+    currentPlayer: 0
+  };
+}
+
+export function getInitialState(): State {
   console.time("state");
   const hexes = getHexes();
   const structures = getStructures(hexes);
+  const game = getGame();
   console.timeEnd("state");
-  return { hexes, structures };
+  return { hexes, structures, game };
 }

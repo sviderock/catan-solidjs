@@ -1,57 +1,119 @@
-import { For, Match, Switch, batch, createEffect, createMemo, onMount } from "solid-js";
+import { For, Match, Show, Switch, batch, createMemo, createSignal, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
+import { Portal } from "solid-js/web";
 import Hexagon from "./Hexagon";
 import Road from "./Road";
 import Stats from "./Stats";
 import Town from "./Town";
+import { Limit } from "./constants";
 import { calculateHex, calculateRoad, calculateTown } from "./utils/calculations";
 import { getInitialState } from "./utils/state";
 import { matches } from "./utils/utils";
-import { Limit } from "./constants";
 
 export default function Board() {
   const refs = {} as Record<Hex["id"] | Structure["id"], HTMLDivElement | undefined>;
-  const [state] = createStore(getInitialState());
+  const [state, setState] = createStore(getInitialState());
+  const [disableTowns, setDisableTowns] = createSignal(false);
 
-  const points = () => {
-    return state.structures.array
-      .filter((s): s is Town => s.active() && s.type === "town")
-      .reduce((acc, s) => {
-        acc += s.level() === "city" ? 2 : 1;
-        return acc;
-      }, 0);
-  };
-
-  const stats = () => {
-    return state.structures.array.reduce(
-      (acc, structure) => {
-        if (!structure.active()) return acc;
-
-        const type: keyof Stats =
-          structure.type === "town"
-            ? structure.level() === "city"
-              ? "cities"
-              : "settlements"
-            : "roads";
-
-        acc[type] += 1;
+  const occupiedStructuresByPlayer = createMemo(() => {
+    return state.game.players.map((player) => [...player.roads(), ...player.towns()]);
+  });
+  const occupiedStructures = createMemo(() => occupiedStructuresByPlayer().flat());
+  const occupiedStructuresIds = createMemo(() => occupiedStructures().map((s) => s.id));
+  const occupied = (id: Structure["id"]) => occupiedStructuresIds().includes(id);
+  const occupiedMap = createMemo(() => {
+    return occupiedStructuresByPlayer().reduce<{ [structureId: Structure["id"]]: Player }>(
+      (acc, playerStructures, idx) => {
+        playerStructures.forEach((s) => {
+          acc[s.id] = state.game.players[idx]!;
+        });
         return acc;
       },
-      { roads: 0, cities: 0, settlements: 0 } as Stats
+      {}
     );
+  });
+
+  const occupiedBy = (id: Structure["id"]) => occupiedMap()[id];
+
+  const disabledTownsByPlayer = createMemo(() => {
+    if (disableTowns()) {
+      return state.structures.array
+        .filter((s): s is Town => s.type === "town")
+        .filter((town) => !occupied(town.id));
+    }
+
+    return occupiedStructuresByPlayer().map((playerStructures) =>
+      playerStructures
+        .filter((s): s is Town => s.type === "town")
+        .flatMap((town) => town.closestTowns)
+    );
+  });
+  const disabledTowns = createMemo(() => disabledTownsByPlayer().flat());
+  const disabledTownsIds = createMemo(() => disabledTowns().map((town) => town.id));
+  const disabled = (id: Town["id"]) => disabledTownsIds().includes(id);
+  const availableStructuresOnSetup = createMemo(() => {
+    return state.structures.array.reduce<Structure[]>((acc, s) => {
+      if (s.type !== "town") return acc;
+
+      const townOccupied = occupied(s.id);
+      const townDisabled = disabled(s.id);
+      const roadPlaced = s.roads.some((r) => occupied(r.id));
+      if (townOccupied && !roadPlaced) acc.push(...s.roads);
+      if (!townOccupied && !townDisabled) acc.push(s);
+
+      return acc;
+    }, []);
+  });
+
+  const availableStructuresIdsOnSetup = createMemo(() =>
+    availableStructuresOnSetup().map((s) => s.id)
+  );
+
+  const availableStructuresByPlayer = createMemo(() => {
+    return occupiedStructuresByPlayer().map((playerStructures, playerIdx) => {
+      return playerStructures.flatMap((s) => {
+        const noMoreRoads = stats()[playerIdx]!.roads === Limit.Roads;
+        const noMoreSettlements = stats()[playerIdx]!.settlements === Limit.Settlements;
+        const roads = noMoreRoads ? [] : s.roads.filter((road) => !occupied(road.id));
+        const towns =
+          noMoreSettlements || !s.towns
+            ? []
+            : s.towns?.filter((road) => !occupied(road.id) && !disabled(road.id));
+        return [...roads, ...towns];
+      });
+    });
+  });
+
+  const availableStructuresIdsByPlayer = createMemo(() =>
+    availableStructuresByPlayer().map((playerStructures) => playerStructures.map((s) => s.id))
+  );
+
+  const available = (id: Structure["id"]) => {
+    if (state.game.phase === "setup") return availableStructuresIdsOnSetup().includes(id);
+    return availableStructuresIdsByPlayer()[state.game.currentPlayer]!.includes(id);
   };
 
-  const phase = createMemo(() => {
-    if (stats().settlements < 2 || stats().roads < 2) {
-      return "setup";
-    }
+  const currentPlayer = () => state.game.players[state.game.currentPlayer]!;
 
-    if (points() >= 10) {
-      return "won";
-    }
+  const stats = (): Stats => {
+    return state.game.players.map((player) => {
+      const roads = player.roads().length;
+      const settlements = player.towns().filter((town) => town.level() === "settlement").length;
+      const cities = player.towns().filter((town) => town.level() === "city").length;
+      const points = settlements + cities * 2;
+      return { roads, settlements, cities, points };
+    });
+  };
 
-    return "game";
-  });
+  const currentPlayerStats = () => stats()[state.game.currentPlayer]!;
+
+  function addTown(town: Town) {
+    currentPlayer().setTowns([...currentPlayer().towns(), town]);
+  }
+
+  function addRoad(road: Road) {
+    currentPlayer().setRoads([...currentPlayer().roads(), road]);
+  }
 
   function recalculate() {
     console.time("calculations");
@@ -78,125 +140,33 @@ export default function Board() {
     console.timeEnd("calculations");
   }
 
-  function toggleRoadAvailable(road: Road) {
-    if (!road.active() && stats().roads === Limit.Roads) {
-      road.setAvailable(false);
-      return;
-    }
+  function endTurn() {
+    setState("game", (game) => {
+      const player = game.players[game.currentPlayer]!;
+      const isFirstPlayer = game.currentPlayer === 0;
+      const lastPlayer = game.players.length - 1;
+      const isLastPlayer = game.currentPlayer === game.players.length - 1;
 
-    road.setAvailable(true);
+      if (game.phase === "setup") {
+        // last player (but first in order) placed last road
+        if (player.roads().length === 2 && isFirstPlayer) {
+          return { phase: "game" };
+        }
+
+        if (player.roads().length === 2 && game.currentPlayer <= lastPlayer) {
+          return { currentPlayer: game.currentPlayer - 1 };
+        }
+
+        return { currentPlayer: isLastPlayer ? lastPlayer : game.currentPlayer + 1 };
+      }
+
+      return {
+        currentPlayer: isLastPlayer ? 0 : game.currentPlayer + 1
+      };
+    });
   }
 
-  function toggleTownAvailable(town: Town) {
-    if (!town.active() && stats().settlements === Limit.Settlements) {
-      town.setAvailable(false);
-      return;
-    }
-
-    if (!town.disabled()) {
-      town.setAvailable(true);
-    }
-  }
-
-  onMount(() => {
-    console.log(state);
-    recalculate();
-  });
-
-  createEffect(() => {
-    if (phase() === "setup") {
-      console.time("setup");
-
-      if (stats().settlements === 0 && stats().roads === 0) {
-        state.structures.array.forEach((structure) => {
-          if (structure.type === "town") structure.setAvailable(true);
-        });
-      }
-
-      if (stats().settlements === 1 && stats().roads === 0) {
-        state.structures.array.forEach((structure) => {
-          if (!structure.active()) {
-            structure.setAvailable(false);
-          }
-        });
-        state.structures.array
-          .reduce<Structure[]>((acc, structure) => {
-            if (structure.active()) acc.push(structure);
-            return acc;
-          }, [])
-          .forEach((structure) => {
-            if (structure.type === "town") {
-              structure.closestTowns.forEach((closeTown) => closeTown.setDisabled(true));
-              structure.roads.forEach((road) => road.setAvailable(true));
-              return;
-            }
-          });
-      }
-
-      if (stats().settlements === 1 && stats().roads === 1) {
-        state.structures.array.forEach((structure) => {
-          if (structure.type === "town" && !structure.active() && !structure.disabled()) {
-            structure.setAvailable(true);
-            return;
-          }
-
-          if (structure.type === "road" && !structure.active()) {
-            structure.setAvailable(false);
-          }
-        });
-      }
-
-      if (stats().settlements === 2 && stats().roads === 1) {
-        state.structures.array.forEach((structure) => {
-          if (structure.type === "town") {
-            if (!structure.active()) {
-              structure.setAvailable(false);
-              return;
-            }
-
-            structure.closestTowns.forEach((closeTown) => closeTown.setDisabled(true));
-            if (structure.roads.some((road) => road.active())) {
-              return;
-            }
-
-            structure.roads.forEach((road) => road.setAvailable(true));
-          }
-        });
-      }
-
-      console.timeEnd("setup");
-      return;
-    }
-
-    if (phase() === "game") {
-      console.time("game");
-      state.structures.array
-        .reduce<Structure[]>((acc, structure) => {
-          if (structure.active()) acc.push(structure);
-          return acc;
-        }, [])
-        .forEach((structure) => {
-          if (structure.type === "town") {
-            structure.closestTowns.forEach((closeTown) => closeTown.setDisabled(true));
-            structure.roads.forEach(toggleRoadAvailable);
-            return;
-          }
-
-          structure.roads.forEach(toggleRoadAvailable);
-          structure.towns.forEach(toggleTownAvailable);
-        });
-
-      console.timeEnd("game");
-      return;
-    }
-
-    // state.structures.array.forEach((structure) => {
-    //   if (structure.type === "town" && structure.active()) {
-    //     structure.closestTowns.forEach((closeTown) => closeTown.setDisabled(true));
-    //     structure.roads.forEach((road) => road.setAvailable(true));
-    //   }
-    // });
-  });
+  onMount(() => recalculate());
 
   return (
     <div class="relative flex scale-[1.3] flex-col flex-wrap items-center justify-center bg-[#f6d7b0] p-12 [clip-path:_polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]">
@@ -223,17 +193,22 @@ export default function Board() {
               {(town) => (
                 <Town
                   {...town()}
-                  game={stats()}
                   ref={refs[town().id]!}
+                  available={available(town().id)}
+                  player={occupiedBy(town().id)}
                   onClick={() => {
-                    if (!town().available() || town().disabled()) return;
-
                     batch(() => {
-                      const allTownsBuilt = stats().settlements === Limit.Settlements;
+                      if (state.game.phase === "setup") {
+                        addTown(town());
+                        setDisableTowns(true);
+                        return;
+                      }
+
+                      const allTownsBuilt = currentPlayerStats().settlements === Limit.Settlements;
                       const canBuildCity =
-                        town().active() &&
+                        occupiedBy(town().id) === currentPlayer() &&
                         town().level() === "settlement" &&
-                        stats().cities < Limit.Cities;
+                        currentPlayerStats().cities < Limit.Cities;
 
                       if (canBuildCity) {
                         town().setLevel(() => "city");
@@ -244,8 +219,8 @@ export default function Board() {
                         return;
                       }
 
-                      if (!town().active()) {
-                        town().setActive(true);
+                      if (!occupied(town().id)) {
+                        addTown(town());
                       }
                     });
                   }}
@@ -258,10 +233,20 @@ export default function Board() {
                 <Road
                   {...road()}
                   ref={refs[road().id]!}
+                  available={available(road().id)}
+                  player={occupiedBy(road().id)}
                   onClick={() => {
-                    if (!road().available() || road().active()) return;
-                    if (stats().roads === Limit.Roads) return;
-                    road().setActive(true);
+                    batch(() => {
+                      if (state.game.phase === "setup") {
+                        addRoad(road());
+                        setDisableTowns(false);
+                        endTurn();
+                        return;
+                      }
+
+                      if (currentPlayerStats().roads === Limit.Roads) return;
+                      addRoad(road());
+                    });
                   }}
                 />
               )}
@@ -270,7 +255,27 @@ export default function Board() {
         )}
       </For>
 
-      <Stats {...stats()} points={points()} />
+      <Stats stats={stats()} />
+
+      <Show when={true}>
+        <Portal>
+          <div class="fixed right-0 top-0 flex w-[250px] flex-col gap-2 rounded-bl-lg bg-blue-100 p-4 text-[1rem]">
+            <div class="flex w-full justify-between">
+              <span>Current Player:</span>
+              <strong>{currentPlayer()?.name}</strong>
+            </div>
+            <div class="flex w-full justify-end">
+              <button
+                type="button"
+                onClick={() => endTurn()}
+                class="rounded-lg border border-purple-700 px-4 py-1 text-center text-sm font-medium text-purple-700 hover:bg-purple-800 hover:text-white focus:outline-none focus:ring-4 focus:ring-purple-300 dark:border-purple-400 dark:text-purple-400 dark:hover:bg-purple-500 dark:hover:text-white dark:focus:ring-purple-900"
+              >
+                Next player
+              </button>
+            </div>
+          </div>
+        </Portal>
+      </Show>
 
       {/* <Show when={phase() === 'won'}>
         <Portal>

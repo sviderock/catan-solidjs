@@ -1,31 +1,30 @@
 import { type Ref } from "solid-js";
+import { shadeHexColor } from "./utils/utils";
 
 export type TownProps = Town & {
   ref: Ref<HTMLDivElement>;
-  game: Game;
+  available: boolean;
+  player?: Player;
   onClick: () => void;
 };
 
 export default function Town(props: TownProps) {
-  const isAvailable = () => props.available() && !props.disabled();
-
   return (
     <div
       ref={props.ref}
-      class="absolute h-[--town-size] w-[--town-size] cursor-pointer rounded-full border-[calc(var(--town-size)*0.125)] [--town-size:calc(var(--hex-size)/7.5)] hover:scale-110"
+      class={`absolute h-[--town-size] w-[--town-size] cursor-pointer rounded-full border-[calc(var(--town-size)*0.125)] border-[color:--town-border-color] bg-[--town-color] opacity-100 [--town-size:calc(var(--hex-size)/7.5)] hover:scale-110`}
       classList={{
-        "!bg-indigo-500 !border-indigo-900 !border-[calc(var(--town-size)*0.35)]":
-          props.level() === "city",
-        "!bg-indigo-500 !border-indigo-900 !opacity-100": props.active(),
-        "opacity-0 invisible": !isAvailable(),
-        "!bg-green-100 border-green-900 opacity-60 hover:bg-indigo-500 hover:border-indigo-900":
-          isAvailable()
+        "!border-[calc(var(--town-size)*0.3)]": props.level() === "city",
+        "opacity-0 invisible pointer-events-none": !props.available && !props.player,
+        "!bg-green-100 !border-green-900 !opacity-60": props.available && !props.player
       }}
-      style={{ top: `${props.pos().y}px`, left: `${props.pos().x}px` }}
-      onMouseOver={() => {
-        if (!isAvailable()) return;
-        props.hexes.forEach(({ hex }) => hex.setHovered(true));
+      style={{
+        top: `${props.pos().y}px`,
+        left: `${props.pos().x}px`,
+        "--town-color": props.player?.color,
+        "--town-border-color": props.player?.color ? shadeHexColor(props.player!.color, -0.55) : ""
       }}
+      onMouseOver={() => props.hexes.forEach(({ hex }) => hex.setHovered(true))}
       onMouseOut={() => props.hexes.forEach(({ hex }) => hex.setHovered(false))}
       onClick={() => props.onClick()}
     />

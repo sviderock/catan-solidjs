@@ -61,28 +61,20 @@ declare global {
   type TownPos = { x: number | null; y: number | null };
   type RoadPos = { x: number | null; y: number | null; angle: number | null };
 
-  type StructureBaseProps = {
-    active: Accessor<boolean>;
-    setActive: Setter<boolean>;
-    available: Accessor<boolean>;
-    setAvailable: Setter<boolean>;
-  };
-
-  type Town = StructureBaseProps & {
+  type Town = {
     id: TownId;
     type: TownType;
     hexes: Array<{ hex: Hex; townIdx: number; roadIdx?: never }>;
     closestTowns: Town[];
     roads: Road[];
+    towns?: never;
     pos: Accessor<TownPos>;
     setPos: Setter<TownPos>;
     level: Accessor<TownLevel>;
     setLevel: Setter<TownLevel>;
-    disabled: Accessor<boolean>;
-    setDisabled: Setter<boolean>;
   };
 
-  type Road = StructureBaseProps & {
+  type Road = {
     id: RoadId;
     type: RoadType;
     hexes: Array<{ hex: Hex; townIdx?: never; roadIdx: number }>;
@@ -95,11 +87,37 @@ declare global {
   type Structure = Town | Road;
   type StructureMap = { [key: Structure["id"]]: Structure };
 
-  type Player = {};
+  type Player = {
+    name: string;
+    color: string;
+    towns: Accessor<Town[]>;
+    setTowns: Setter<Town[]>;
+    roads: Accessor<Road[]>;
+    setRoads: Setter<Road[]>;
+  };
 
-  type Game = {
+  type Stats = Array<{
     roads: number;
     settlements: number;
     cities: number;
+    points: number;
+  }>;
+
+  type State = {
+    hexes: {
+      array: Hex[];
+      byId: { [hexId: Hex["id"]]: Hex };
+      layout: Hex[][];
+    };
+    structures: {
+      array: Structure[];
+      byId: StructureMap;
+      keys: { towns: TownId[]; roads: RoadId[] };
+    };
+    game: {
+      phase: "setup" | "game" | "won";
+      currentPlayer: number;
+      players: Player[];
+    };
   };
 }
