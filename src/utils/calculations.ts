@@ -19,12 +19,12 @@ export function calculateHex(target: HTMLDivElement): HexCalculations {
   const bottom = target.offsetTop + target.offsetHeight;
   const center = { x: (left + right) / 2, y: (top + bottom) / 2 };
   const angles: HexCalculations["angles"] = [
-    { x: center.x, y: center.y - sizeToAngle },
-    { x: center.x + sizeToEdge, y: center.y - heightSection },
-    { x: center.x + sizeToEdge, y: center.y + heightSection },
-    { x: center.x, y: center.y + sizeToAngle },
-    { x: center.x - sizeToEdge, y: center.y + heightSection },
-    { x: center.x - sizeToEdge, y: center.y - heightSection }
+    { x: center.x, y: Math.round(center.y - sizeToAngle) },
+    { x: Math.round(center.x + sizeToEdge), y: Math.round(center.y - heightSection) },
+    { x: Math.round(center.x + sizeToEdge), y: Math.round(center.y + heightSection) },
+    { x: center.x, y: Math.round(center.y + sizeToAngle) },
+    { x: Math.round(center.x - sizeToEdge), y: Math.round(center.y + heightSection) },
+    { x: Math.round(center.x - sizeToEdge), y: Math.round(center.y - heightSection) }
   ];
 
   const edges: HexCalculations["edges"] = Array.from({ length: 6 }).map((_, idx, arr) => {

@@ -9,20 +9,26 @@ type Props = {
 export default function Stats(props: Props) {
   return (
     <Portal>
-      <div class="fixed left-0 top-0 flex flex-col gap-2 bg-blue-100 p-2 text-[1rem] font-bold">
+      <div class="fixed bottom-0 left-0 flex flex-col gap-4 bg-[#373F51] p-2 text-[0.8rem] font-bold">
         <For each={props.stats}>
-          {(player) => (
-            <div class="flex">
-              <span>
-                Roads: {player.roads} ({Limit.Roads - player.roads} left)
+          {(playerStats) => (
+            <div
+              class="grid grid-flow-row-dense grid-cols-3 flex-col"
+              style={{ color: playerStats.player.color }}
+            >
+              <span class="col-span-3 flex gap-4">
+                {playerStats.player.name}: <strong>{playerStats.points} points</strong>
               </span>
               <span>
-                Settlements: {player.settlements} ({Limit.Settlements - player.settlements} left)
+                Roads: {playerStats.roads} ({Limit.Roads - playerStats.roads})
               </span>
-              <span>
-                Cities: {player.cities} ({Limit.Cities - player.cities} left)
+              <span class="text-center">
+                Settlements: {playerStats.settlements} (
+                {Limit.Settlements - playerStats.settlements})
               </span>
-              <span>Points: {player.points} points</span>
+              <span class="text-end">
+                Cities: {playerStats.cities} ({Limit.Cities - playerStats.cities})
+              </span>
             </div>
           )}
         </For>

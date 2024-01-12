@@ -1,8 +1,8 @@
 import { createSignal } from "solid-js";
-import { regularBoard } from "./boardArrays";
 import { getNeighbourHex } from "./neighbour";
 import { getStructureId, type GetStructureId } from "./utils";
 import { Colors } from "../constants";
+import { Boards } from "../constants/boards";
 
 function idx(i: number) {
   if (i > 5) return 0;
@@ -11,9 +11,9 @@ function idx(i: number) {
 }
 
 function getHexes() {
-  const hexes = regularBoard.reduce(
-    (acc, hexRow, rowIdx) => {
-      hexRow.forEach(({ type }, colIdx) => {
+  const hexes = Boards.A.reduce(
+    (acc, hexRow, rowIdx, arr) => {
+      hexRow.forEach(({ type, value }, colIdx) => {
         const id: Hex["id"] = `${rowIdx}.${colIdx}`;
         const [hovered, setHovered] = createSignal(false);
         const [calc, setCalc] = createSignal<HexCalculations>({
@@ -26,13 +26,14 @@ function getHexes() {
         });
         const hex: Hex = {
           id,
-          idx: rowIdx + colIdx,
           type,
+          value,
+          idx: rowIdx + colIdx,
           row: rowIdx,
           col: colIdx,
           rowLen: hexRow.length,
-          prevRowLen: rowIdx - 1 < 0 ? null : regularBoard[rowIdx - 1]!.length,
-          nextRowLen: rowIdx + 1 >= regularBoard.length ? null : regularBoard[rowIdx + 1]!.length,
+          prevRowLen: rowIdx - 1 < 0 ? null : arr[rowIdx - 1]!.length,
+          nextRowLen: rowIdx + 1 >= arr.length ? null : arr[rowIdx + 1]!.length,
           siblings: [],
           towns: [],
           roads: [],

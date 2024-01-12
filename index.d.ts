@@ -33,12 +33,13 @@ declare global {
   };
 
   type Hex = {
-    type: "brick" | "lumber" | "ore" | "grain" | "wool";
+    type: "brick" | "lumber" | "ore" | "grain" | "wool" | "desert";
     idx: number;
     id: Id;
     row: number;
     col: number;
     rowLen: number;
+    value: number;
     prevRowLen: number | null;
     nextRowLen: number | null;
     siblings: Array<Hex | null>;
@@ -101,6 +102,7 @@ declare global {
     settlements: number;
     cities: number;
     points: number;
+    player: Player;
   }>;
 
   type State = {

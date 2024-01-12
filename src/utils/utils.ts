@@ -24,12 +24,6 @@ export function getStructureId<
   } as R;
 }
 
-export function extractFirstId(data: Structure["id"]) {
-  const [, indexedId] = data.split("|")[0]!.split(":");
-  const [id, idx] = indexedId!.split("-");
-  return { id: id!, idx: +idx! };
-}
-
 export function shadeHexColor(color: string, percent: number) {
   var f = parseInt(color.slice(1), 16),
     t = percent < 0 ? 0 : 255,
@@ -48,4 +42,10 @@ export function shadeHexColor(color: string, percent: number) {
       .toString(16)
       .slice(1)
   );
+}
+
+export function rollDice() {
+  const a = Math.floor(Math.random() * 6) + 1;
+  const b = Math.floor(Math.random() * 6) + 1;
+  return { a, b, roll: a + b };
 }

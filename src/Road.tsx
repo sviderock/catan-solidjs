@@ -8,11 +8,16 @@ type RoadProps = Road & {
   onClick: () => void;
 };
 
+const roadHeight = "[--road-height:calc(var(--hex-size)*0.08)]";
+const roadWidth = "w-[calc(var(--hex-size)*0.33)]";
+const roadBorder = "border-[calc(var(--road-height)*0.2)]";
+const roadRounding = "rounded-[calc(var(--road-height)*0.1)]";
+
 export default function Road(props: RoadProps) {
   return (
     <div
       ref={props.ref}
-      class="absolute h-[--road-height] w-[calc(var(--hex-size)/3.4285)] cursor-pointer rounded-[calc(var(--road-height)*0.1)] border-[calc(var(--road-height)*0.2)] border-[color:--road-border-color] bg-[--road-color] [--road-height:calc(var(--hex-size)/12)] hover:scale-110"
+      class={`absolute ${roadHeight} h-[--road-height] ${roadWidth} cursor-pointer ${roadRounding} ${roadBorder} border-[color:--road-border-color] bg-[--road-color] transition hover:scale-105`}
       classList={{
         "opacity-0 invisible pointer-events-none": !props.available && !props.player,
         "!bg-green-100 !border-green-900 opacity-60 hover:bg-indigo-500 hover:border-indigo-900":

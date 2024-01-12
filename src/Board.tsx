@@ -1,7 +1,7 @@
 import { For, Match, Show, Switch, batch, createMemo, createSignal, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Portal } from "solid-js/web";
-import Hexagon from "./Hexagon";
+import Hexagon from "./Hexagon/Hexagon";
 import Road from "./Road";
 import Stats from "./Stats";
 import Town from "./Town";
@@ -9,7 +9,6 @@ import { Limit } from "./constants";
 import { calculateHex, calculateRoad, calculateTown } from "./utils/calculations";
 import { getInitialState } from "./utils/state";
 import { matches } from "./utils/utils";
-import Die from "./Die";
 
 export default function Board() {
   const refs = {} as Record<Hex["id"] | Structure["id"], HTMLDivElement | undefined>;
@@ -96,15 +95,15 @@ export default function Board() {
 
   const currentPlayer = () => state.game.players[state.game.currentPlayer]!;
 
-  const stats = (): Stats => {
+  const stats = createMemo((): Stats => {
     return state.game.players.map((player) => {
       const roads = player.roads().length;
       const settlements = player.towns().filter((town) => town.level() === "settlement").length;
       const cities = player.towns().filter((town) => town.level() === "city").length;
       const points = settlements + cities * 2;
-      return { roads, settlements, cities, points };
+      return { roads, settlements, cities, points, player };
     });
-  };
+  });
 
   const currentPlayerStats = () => stats()[state.game.currentPlayer]!;
 
@@ -169,11 +168,17 @@ export default function Board() {
 
   onMount(() => recalculate());
 
+  // [clip-path:_polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]
   return (
-    <div class="relative flex scale-[1.3] flex-col flex-wrap items-center justify-center bg-[#f6d7b0] p-12 [clip-path:_polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]">
+    <div
+      class="relative flex scale-[1] flex-col flex-wrap items-center justify-center bg-blue-400 p-[150px]"
+      style={{
+        background: "radial-gradient(closest-side, #fde68a 55%, #60a5fa 75%, #2463eb 100%)"
+      }}
+    >
       <For each={state.hexes.layout}>
         {(hexRow) => (
-          <div class="-my-[calc(var(--hex-size)/8)] flex">
+          <div class="flex">
             <For each={hexRow}>
               {(hex) => (
                 <Hexagon
@@ -288,11 +293,11 @@ export default function Board() {
         </Portal>
       </Show> */}
 
-      <Portal>
+      {/* <Portal>
         <div class="fixed bottom-[200px] right-[200px]">
-          <Die />
+          <Die color={0} />
         </div>
-      </Portal>
+      </Portal> */}
     </div>
   );
 }
