@@ -1,6 +1,3 @@
-const OFFSET_Y = 8;
-const OFFSET_X = (OFFSET_Y / 2) * Math.sqrt(3);
-
 function findAngle(x1: number, y1: number, x2: number, y2: number) {
   let atan = Math.atan2(y2 - y1, x2 - x1); // find arctangent
   // we don't want negative angles

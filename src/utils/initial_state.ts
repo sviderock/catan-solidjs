@@ -1,8 +1,8 @@
 import { createSignal } from "solid-js";
-import { getNeighbourHex } from "./neighbour";
-import { getStructureId, type GetStructureId } from "./utils";
 import { Colors } from "../constants";
 import { Boards } from "../constants/boards";
+import { getNeighbourHex } from "./neighbour";
+import { getStructureId, type GetStructureId } from "./utils";
 
 function idx(i: number) {
   if (i > 5) return 0;
@@ -231,15 +231,47 @@ function getGame(): State["game"] {
   return {
     phase: "setup",
     players,
-    currentPlayer: 0
+    turn: {
+      order: "first",
+      player: 0,
+      town: null,
+      road: null
+    }
   };
 }
 
-export function getInitialState(): State {
+function getStartedGame(structures: ReturnType<typeof getStructures>): State["game"] {
+  const players: Player[] = [
+    { name: "Player 1", color: Colors[0]!, ...getPlayerData() },
+    { name: "Player 2", color: Colors[1]!, ...getPlayerData() },
+    { name: "Player 3", color: Colors[2]!, ...getPlayerData() },
+    { name: "Player 4", color: Colors[3]!, ...getPlayerData() }
+  ];
+
+  const towns = structures.array.filter((s): s is Town => s.type === "town");
+  players[0]!.setTowns([towns[0]!, towns[2]!]);
+  players[0]!.setRoads([towns[0]!.roads[0]!, towns[2]!.roads[0]!]);
+  players[1]!.setTowns([towns[10]!, towns[12]!]);
+  players[1]!.setRoads([towns[10]!.roads[0]!, towns[12]!.roads[0]!]);
+  players[2]!.setTowns([towns[23]!, towns[25]!]);
+  players[2]!.setRoads([towns[23]!.roads[0]!, towns[25]!.roads[0]!]);
+  players[3]!.setTowns([towns[32]!, towns[33]!]);
+  players[3]!.setRoads([towns[32]!.roads[0]!, towns[33]!.roads[0]!]);
+
+  return {
+    phase: "game",
+    players,
+    turn: {
+      player: 0
+    }
+  };
+}
+
+export function getInitialState(params?: { phase: State["game"]["phase"] }): State {
   console.time("state");
   const hexes = getHexes();
   const structures = getStructures(hexes);
-  const game = getGame();
+  const game = params?.phase === "game" ? getStartedGame(structures) : getGame();
   console.timeEnd("state");
   return { hexes, structures, game };
 }

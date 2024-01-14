@@ -19,11 +19,6 @@ export type HexagonProps = Hex & {
   onNeighbourHover: (neighbour: Id, hovered: boolean) => void;
 };
 
-const hexMX = "mx-[-0.5px]";
-const hexMY = "my-[calc(var(--hex-size)*0.125*-1)]";
-const borderHexSize = "[--size:calc(var(--hex-size)*0.85)]";
-const innerHexSize = "[--size:calc(var(--hex-size)*0.8)]";
-
 export default function Hexagon(props: HexagonProps) {
   const icon = () => HexType[props.type].icon;
   const color = () => HexType[props.type].color;
@@ -37,13 +32,19 @@ export default function Hexagon(props: HexagonProps) {
   };
 
   return (
-    <div ref={props.ref} class={`relative ${hexMX} ${hexMY}`}>
+    <div ref={props.ref} class="relative mx-[-0.5px] my-[calc(var(--hex-size)*0.125*-1)]">
       <HexDiv style={{ color: SandColor }}>
-        <HexDiv class={`${borderHexSize}`} style={{ color: borderColor() }}>
+        <HexDiv
+          style={{
+            color: borderColor(),
+            "--size": "calc(var(--hex-size) * 0.85)"
+          }}
+        >
           <HexDiv
-            class={`${innerHexSize}`}
+            class="select-none"
             style={{
               color: color(),
+              "--size": "calc(var(--hex-size) * 0.8)",
               "background-image": props.value !== 7 ? backgroundImage() : ""
             }}
           >

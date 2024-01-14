@@ -1,38 +1,36 @@
 import { type Ref } from "solid-js";
 import { shadeHexColor } from "./utils/utils";
+import { twMerge } from "tailwind-merge";
 
 type RoadProps = Road & {
   ref: Ref<HTMLDivElement>;
-  available: boolean;
+  unoccupied: boolean;
   player?: Player;
   onClick: () => void;
 };
-
-const roadHeight = "[--road-height:calc(var(--hex-size)*0.08)]";
-const roadWidth = "w-[calc(var(--hex-size)*0.33)]";
-const roadBorder = "border-[calc(var(--road-height)*0.2)]";
-const roadRounding = "rounded-[calc(var(--road-height)*0.1)]";
 
 export default function Road(props: RoadProps) {
   return (
     <div
       ref={props.ref}
-      class={`absolute ${roadHeight} h-[--road-height] ${roadWidth} cursor-pointer ${roadRounding} ${roadBorder} border-[color:--road-border-color] bg-[--road-color] transition hover:scale-105`}
-      classList={{
-        "opacity-0 invisible pointer-events-none": !props.available && !props.player,
-        "!bg-green-100 !border-green-900 opacity-60 hover:bg-indigo-500 hover:border-indigo-900":
-          props.available && !props.player
-      }}
+      onClick={() => props.onClick()}
+      class={twMerge(
+        "absolute h-[--road-height] w-[--road-width] cursor-pointer rounded-[--road-border-round] border-[length:--road-border-width] transition hover:scale-105",
+        !props.unoccupied && "cursor-default border-transparent opacity-0",
+        props.unoccupied && "border-green-900 bg-green-100 opacity-60",
+        !!props.player && "border-[color:--road-border-color] bg-[--road-color] opacity-100"
+      )}
       style={{
         top: `${props.pos().y}px`,
         left: `${props.pos().x}px`,
         rotate: `${props.pos().angle}deg`,
+        "--road-height": "calc(var(--hex-size) * 0.08)",
+        "--road-width": "calc(var(--hex-size) * 0.33)",
         "--road-color": props.player?.color,
-        "--road-border-color": props.player?.color ? shadeHexColor(props.player!.color, -0.55) : ""
+        "--road-border-width": "calc(var(--road-height) * 0.2)",
+        "--road-border-round": "calc(var(--road-height) * 0.1)",
+        "--road-border-color": props.player?.color ? shadeHexColor(props.player!.color, -0.5) : ""
       }}
-      onMouseOver={() => props.hexes.forEach(({ hex }) => hex.setHovered(true))}
-      onMouseOut={() => props.hexes.forEach(({ hex }) => hex.setHovered(false))}
-      onClick={() => props.onClick()}
     />
   );
 }

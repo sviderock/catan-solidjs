@@ -9,7 +9,7 @@ type Props = {
 export default function Stats(props: Props) {
   return (
     <Portal>
-      <div class="fixed bottom-0 left-0 flex flex-col gap-4 bg-[#373F51] p-2 text-[0.8rem] font-bold">
+      <div class="fixed bottom-0 left-0 flex flex-col gap-4 bg-dark p-2 text-[0.8rem] font-bold">
         <For each={props.stats}>
           {(playerStats) => (
             <div

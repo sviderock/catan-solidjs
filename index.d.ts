@@ -105,6 +105,28 @@ declare global {
     player: Player;
   }>;
 
+  type SetupPhase = {
+    players: Player[];
+    phase: "setup";
+    turn: {
+      player: number;
+      order: "first" | "second";
+      town: Town | null;
+      road: Road | null;
+    };
+  };
+
+  type GamePhase = {
+    players: Player[];
+    phase: "game";
+    turn: {
+      player: number;
+      order?: never;
+      town?: never;
+      road?: never;
+    };
+  };
+
   type State = {
     hexes: {
       array: Hex[];
@@ -116,10 +138,6 @@ declare global {
       byId: StructureMap;
       keys: { towns: TownId[]; roads: RoadId[] };
     };
-    game: {
-      phase: "setup" | "game" | "won";
-      currentPlayer: number;
-      players: Player[];
-    };
+    game: SetupPhase | GamePhase;
   };
 }

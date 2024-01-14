@@ -4,7 +4,11 @@ const config: Config = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx,css,md,mdx,html,json,scss}"],
   darkMode: "class",
   theme: {
-    extend: {}
+    extend: {
+      colors: {
+        dark: "#373F51"
+      }
+    }
   },
   plugins: []
 };
