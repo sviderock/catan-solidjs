@@ -26,6 +26,8 @@ declare global {
     }>;
   };
 
+  type Resource = "brick" | "lumber" | "ore" | "grain" | "wool";
+
   type HexNeighbour = Pick<Hex, "id" | "row" | "col"> & {
     towns: number[];
     townToTown: { [hexTown: number]: number };
@@ -33,7 +35,7 @@ declare global {
   };
 
   type Hex = {
-    type: "brick" | "lumber" | "ore" | "grain" | "wool" | "desert";
+    type: Resource | "desert";
     idx: number;
     id: Id;
     row: number;
@@ -64,6 +66,7 @@ declare global {
 
   type Town = {
     id: TownId;
+    idx: number;
     type: TownType;
     hexes: Array<{ hex: Hex; townIdx: number; roadIdx?: never }>;
     closestTowns: Town[];
@@ -77,6 +80,7 @@ declare global {
 
   type Road = {
     id: RoadId;
+    idx: number;
     type: RoadType;
     hexes: Array<{ hex: Hex; townIdx?: never; roadIdx: number }>;
     towns: Town[];
@@ -88,9 +92,12 @@ declare global {
   type Structure = Town | Road;
   type StructureMap = { [key: Structure["id"]]: Structure };
 
+  type PlayerResources = Record<Resource, number>;
   type Player = {
     name: string;
     color: string;
+    resources: Accessor<PlayerResources>;
+    setResources: Setter<PlayerResources>;
     towns: Accessor<Town[]>;
     setTowns: Setter<Town[]>;
     roads: Accessor<Road[]>;
@@ -132,6 +139,7 @@ declare global {
       array: Hex[];
       byId: { [hexId: Hex["id"]]: Hex };
       layout: Hex[][];
+      valueMap: { [value: number]: Hex[] };
     };
     structures: {
       array: Structure[];
@@ -139,5 +147,17 @@ declare global {
       keys: { towns: TownId[]; roads: RoadId[] };
     };
     game: SetupPhase | GamePhase;
+  };
+
+  type Roll = {
+    a: number;
+    b: number;
+    roll: number;
+  };
+
+  type ResourceSummary = Record<Hex["type"], number>;
+  type PlayerResourceSummary = { [diceValue: number]: ResourceSummary };
+  type PlayerResourceSummaryIterative = {
+    [diceValue: number]: Array<[Hex["type"], resourceCount: number]>;
   };
 }

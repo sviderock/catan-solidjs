@@ -1,15 +1,15 @@
-import { Show, type JSX, type Ref, Switch } from "solid-js";
-import HexDebug from "./HexDebug";
-import { SandColor } from "../constants";
+import { Show, type JSX, type Ref } from "solid-js";
+import { ResourceIcon, SandColor } from "../constants";
 import { shadeHexColor } from "../utils/utils";
+import HexDebug from "./HexDebug";
 
 const HexType = {
-  brick: { color: "#A25353", icon: "🧱", iconCode: "&#129521;" },
-  lumber: { color: "#3F923A", icon: "🪵", iconCode: "&#129717;" },
-  ore: { color: "#98B0C3", icon: "🪨", iconCode: "&#129704;" },
-  grain: { color: "#fece41", icon: "🌾", iconCode: "&#127806;" },
-  wool: { color: "#86CD82", icon: "🐑", iconCode: "&#128017;" },
-  desert: { color: "#feb536", icon: "🏜️", iconCode: "&#127964;" }
+  brick: { color: "#A25353", icon: ResourceIcon.brick, iconCode: "&#129521;" },
+  lumber: { color: "#3F923A", icon: ResourceIcon.lumber, iconCode: "&#129717;" },
+  ore: { color: "#98B0C3", icon: ResourceIcon.ore, iconCode: "&#129704;" },
+  grain: { color: "#fece41", icon: ResourceIcon.grain, iconCode: "&#127806;" },
+  wool: { color: "#86CD82", icon: ResourceIcon.wool, iconCode: "&#128017;" },
+  desert: { color: "#feb536", icon: ResourceIcon.desert, iconCode: "&#127964;" }
 } satisfies Record<HexagonProps["type"], { color: string; icon: string; iconCode: string }>;
 
 export type HexagonProps = Hex & {

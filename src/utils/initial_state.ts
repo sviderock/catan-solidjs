@@ -10,8 +10,8 @@ function idx(i: number) {
   return i;
 }
 
-function getHexes() {
-  const hexes = Boards.A.reduce(
+function getHexes(): State["hexes"] {
+  const hexes = Boards.A.reduce<State["hexes"]>(
     (acc, hexRow, rowIdx, arr) => {
       hexRow.forEach(({ type, value }, colIdx) => {
         const id: Hex["id"] = `${rowIdx}.${colIdx}`;
@@ -47,14 +47,12 @@ function getHexes() {
         acc.byId[hex.id] = hex;
         acc.layout[rowIdx] ||= [];
         acc.layout[rowIdx]![colIdx] = hex;
+        acc.valueMap[hex.value] ||= [];
+        acc.valueMap[hex.value]!.push(hex);
       });
       return acc;
     },
-    {
-      array: [] as Hex[],
-      byId: {} as { [hexId: Hex["id"]]: Hex },
-      layout: [] as Hex[][]
-    }
+    { array: [], byId: {}, layout: [], valueMap: {} }
   );
 
   hexes.array.forEach((hex) => {
@@ -67,7 +65,7 @@ function getHexes() {
   return hexes;
 }
 
-function createTown(ids: GetStructureId<"town">, hexes: Town["hexes"]): Town {
+function createTown(ids: GetStructureId<"town">, idx: number, hexes: Town["hexes"]): Town {
   const [level, setLevel] = createSignal<TownLevel>("settlement");
   const [pos, setPos] = createSignal<TownPos>(
     { x: null, y: null },
@@ -77,6 +75,7 @@ function createTown(ids: GetStructureId<"town">, hexes: Town["hexes"]): Town {
   return {
     type: "town",
     id: ids.id,
+    idx,
     closestTowns: [],
     roads: [],
     hexes,
@@ -87,7 +86,7 @@ function createTown(ids: GetStructureId<"town">, hexes: Town["hexes"]): Town {
   };
 }
 
-function createRoad(ids: GetStructureId<"road">, hexes: Road["hexes"]): Road {
+function createRoad(ids: GetStructureId<"road">, idx: number, hexes: Road["hexes"]): Road {
   const [pos, setPos] = createSignal<RoadPos>(
     { x: null, y: null, angle: null },
     { equals: (prev, next) => prev.x === next.x && prev.y === next.y && prev.angle === next.angle }
@@ -96,6 +95,7 @@ function createRoad(ids: GetStructureId<"road">, hexes: Road["hexes"]): Road {
   return {
     type: "road",
     id: ids.id,
+    idx,
     towns: [],
     roads: [],
     hexes,
@@ -105,6 +105,9 @@ function createRoad(ids: GetStructureId<"road">, hexes: Road["hexes"]): Road {
 }
 
 function getStructures(hexes: ReturnType<typeof getHexes>) {
+  let townIdx = 0;
+  let roadIdx = 0;
+
   const structures = hexes.array.reduce(
     (acc, hex) => {
       [0, 1, 2, 3, 4, 5].forEach((sideIdx) => {
@@ -124,19 +127,21 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
 
         const townIds = getStructureId({ type: "town", hexes: townHexes });
         const roadIds = getStructureId({ type: "road", hexes: roadHexes });
-        const town = createTown(townIds, townHexes);
-        const road = createRoad(roadIds, roadHexes);
+        const town = createTown(townIds, townIdx, townHexes);
+        const road = createRoad(roadIds, roadIdx, roadHexes);
 
         if (!acc.byId[townIds.id]) {
           acc.byId[townIds.id] = town;
           acc.array.push(town);
           acc.keys.towns.push(townIds.id);
+          townIdx++;
         }
 
         if (!acc.byId[roadIds.id]) {
           acc.byId[roadIds.id] = road;
           acc.array.push(road);
           acc.keys.roads.push(roadIds.id);
+          roadIdx++;
         }
 
         hex.towns.push(town);
@@ -214,23 +219,36 @@ function processBetweenTowns(
     }, []);
 }
 
-function getPlayerData() {
+function generatePlayer(idx: number, withResources?: boolean) {
   const [towns, setTowns] = createSignal<Town[]>([]);
   const [roads, setRoads] = createSignal<Road[]>([]);
-  return { towns, setTowns, roads, setRoads };
+  const [resources, setResources] = createSignal<PlayerResources>({
+    brick: withResources ? 100 : 0,
+    grain: withResources ? 100 : 0,
+    lumber: withResources ? 100 : 0,
+    ore: withResources ? 100 : 0,
+    wool: withResources ? 100 : 0
+  });
+  return {
+    name: `Player ${idx + 1}`,
+    color: Colors[idx]!,
+    resources,
+    setResources,
+    towns,
+    setTowns,
+    roads,
+    setRoads
+  };
 }
 
-function getGame(): State["game"] {
-  const players: Player[] = [
-    { name: "Player 1", color: Colors[0]!, ...getPlayerData() },
-    { name: "Player 2", color: Colors[1]!, ...getPlayerData() },
-    { name: "Player 3", color: Colors[2]!, ...getPlayerData() },
-    { name: "Player 4", color: Colors[3]!, ...getPlayerData() }
-  ];
+function generatePlayers(count: number, withResources?: boolean) {
+  return new Array(count).fill(undefined).map((_, idx) => generatePlayer(idx, withResources));
+}
 
+function getSetupGame(): SetupPhase {
   return {
     phase: "setup",
-    players,
+    players: generatePlayers(4),
     turn: {
       order: "first",
       player: 0,
@@ -240,23 +258,46 @@ function getGame(): State["game"] {
   };
 }
 
-function getStartedGame(structures: ReturnType<typeof getStructures>): State["game"] {
-  const players: Player[] = [
-    { name: "Player 1", color: Colors[0]!, ...getPlayerData() },
-    { name: "Player 2", color: Colors[1]!, ...getPlayerData() },
-    { name: "Player 3", color: Colors[2]!, ...getPlayerData() },
-    { name: "Player 4", color: Colors[3]!, ...getPlayerData() }
-  ];
+function getHalfSetup(structures: ReturnType<typeof getStructures>): SetupPhase {
+  const players: Player[] = generatePlayers(4, true);
 
   const towns = structures.array.filter((s): s is Town => s.type === "town");
-  players[0]!.setTowns([towns[0]!, towns[2]!]);
-  players[0]!.setRoads([towns[0]!.roads[0]!, towns[2]!.roads[0]!]);
-  players[1]!.setTowns([towns[10]!, towns[12]!]);
-  players[1]!.setRoads([towns[10]!.roads[0]!, towns[12]!.roads[0]!]);
-  players[2]!.setTowns([towns[23]!, towns[25]!]);
-  players[2]!.setRoads([towns[23]!.roads[0]!, towns[25]!.roads[0]!]);
-  players[3]!.setTowns([towns[32]!, towns[33]!]);
-  players[3]!.setRoads([towns[32]!.roads[0]!, towns[33]!.roads[0]!]);
+  const roads = structures.array.filter((s): s is Road => s.type === "road");
+
+  players[0]!.setTowns([towns[14]!]);
+  players[0]!.setRoads([roads[16]!]);
+  players[1]!.setTowns([towns[13]!]);
+  players[1]!.setRoads([roads[24]!]);
+  players[2]!.setTowns([towns[38]!]);
+  players[2]!.setRoads([roads[49]!]);
+  players[3]!.setTowns([towns[47]!]);
+  players[3]!.setRoads([roads[62]!]);
+
+  return {
+    phase: "setup",
+    players,
+    turn: {
+      player: 3,
+      order: "second",
+      road: null,
+      town: null
+    }
+  };
+}
+
+function getStartedGame(structures: ReturnType<typeof getStructures>): State["game"] {
+  const players: Player[] = generatePlayers(4, true);
+  const towns = structures.array.filter((s): s is Town => s.type === "town");
+  const roads = structures.array.filter((s): s is Road => s.type === "road");
+
+  players[0]!.setTowns([towns[14]!, towns[9]!]);
+  players[0]!.setRoads([roads[16]!, roads[9]!]);
+  players[1]!.setTowns([towns[13]!, towns[34]!]);
+  players[1]!.setRoads([roads[24]!, roads[43]!]);
+  players[2]!.setTowns([towns[38]!, towns[25]!]);
+  players[2]!.setRoads([roads[49]!, roads[31]!]);
+  players[3]!.setTowns([towns[47]!, towns[21]!]);
+  players[3]!.setRoads([roads[62]!, roads[39]!]);
 
   return {
     phase: "game",
@@ -267,11 +308,17 @@ function getStartedGame(structures: ReturnType<typeof getStructures>): State["ga
   };
 }
 
-export function getInitialState(params?: { phase: State["game"]["phase"] }): State {
+export function getInitialState(phase?: "game" | "half"): State {
   console.time("state");
   const hexes = getHexes();
   const structures = getStructures(hexes);
-  const game = params?.phase === "game" ? getStartedGame(structures) : getGame();
+
+  const game =
+    phase === "game"
+      ? getStartedGame(structures)
+      : phase === "half"
+        ? getHalfSetup(structures)
+        : getSetupGame();
   console.timeEnd("state");
   return { hexes, structures, game };
 }

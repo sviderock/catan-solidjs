@@ -3,5 +3,5 @@
 @tailwind utilities;
 
 :root {
-  --hex-size: 180px;
+  --hex-size: 150px;
 }

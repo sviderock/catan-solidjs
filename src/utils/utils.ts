@@ -44,8 +44,10 @@ export function shadeHexColor(color: string, percent: number) {
   );
 }
 
-export function rollDice() {
+export function rollDice(prevRoll?: number) {
   const a = Math.floor(Math.random() * 6) + 1;
   const b = Math.floor(Math.random() * 6) + 1;
-  return { a, b, roll: a + b };
+  const roll = a + b;
+  if (prevRoll === roll) return rollDice(prevRoll);
+  return { a, b, roll };
 }

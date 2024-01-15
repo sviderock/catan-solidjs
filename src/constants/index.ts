@@ -22,3 +22,12 @@ export const Limit = {
   Settlements: 5,
   Cities: 4
 };
+
+export const ResourceIcon = {
+  brick: "🧱",
+  lumber: "🪵",
+  ore: "🪨",
+  grain: "🌾",
+  wool: "🐑",
+  desert: "🏜️"
+};
