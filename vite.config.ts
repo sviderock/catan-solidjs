@@ -1,19 +1,25 @@
 import { defineConfig, loadEnv } from "vite";
 import solidPlugin from "vite-plugin-solid";
 import devtools from "solid-devtools/vite";
+import checker from "vite-plugin-checker";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
     plugins: [
-      /* 
-      Uncomment the following line to enable solid-devtools.
-      For more info see https://github.com/thetarnav/solid-devtools/tree/main/packages/extension#readme
-      */
       mode === "development" ? devtools() : undefined,
-      solidPlugin()
+      solidPlugin(),
+      tsconfigPaths({ root: ".", projects: ["tsconfig.json"] }),
+      checker({
+        typescript: {
+          root: ".",
+          tsconfigPath: "./tsconfig.json"
+        }
+      })
     ],
     server: {
+      // @ts-expect-error
       port: +env.PORT || 3000,
       host: "0.0.0.0"
     },
