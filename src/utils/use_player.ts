@@ -19,5 +19,26 @@ export function usePlayer(state: State) {
 
   const currentPlayerStats = createMemo(() => stats()[state.game.turn.player]!);
 
-  return { currentPlayer, nextPlayerIdx, stats, currentPlayerStats };
+  function townValue(town: Town) {
+    return town.level() === "city" ? 2 : 1;
+  }
+
+  function countPotentialResources(towns: Town[], playerSummary: PlayerResourceSummary) {
+    towns.forEach((town) => {
+      town.hexes.forEach(({ hex }) => {
+        playerSummary[hex.value] ||= { brick: 0, grain: 0, desert: 0, lumber: 0, wool: 0, ore: 0 };
+        playerSummary[hex.value]![hex.type] += townValue(town);
+      });
+    });
+  }
+
+  const playersResourceSummary = createMemo(() => {
+    return state.game.players.reduce<PlayerResourceSummary[]>((acc, player, playerIdx) => {
+      acc[playerIdx] ||= {};
+      countPotentialResources(player.towns(), acc[playerIdx]!);
+      return acc;
+    }, []);
+  });
+
+  return { currentPlayer, nextPlayerIdx, stats, currentPlayerStats, playersResourceSummary };
 }

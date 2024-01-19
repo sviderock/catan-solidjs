@@ -53,6 +53,28 @@ declare global {
     setCalc: Setter<HexCalculations>;
   };
 
+  type BoardHarbor = {
+    type: Harbor["type"];
+    towns: [{ hex: number; town: number }, { hex: number; town: number }];
+  };
+
+  type HarborPos = {
+    x: number | null;
+    y: number | null;
+    dock1: { x: number | null; y: number | null; angle: number | null };
+    dock2: { x: number | null; y: number | null; angle: number | null };
+  };
+
+  type Harbor = {
+    id: number | string;
+    idx: number;
+    type: Resource | "all";
+    towns: [Town, Town];
+    dockIds: [string, string];
+    pos: Accessor<HarborPos>;
+    setPos: Setter<HarborPos>;
+  };
+
   type TownType = "town";
   type RoadType = "road";
 
@@ -61,7 +83,7 @@ declare global {
   type TownId = ConstructedIdOfType<TownType>;
   type RoadId = ConstructedIdOfType<RoadType>;
 
-  type TownPos = { x: number | null; y: number | null };
+  type TownPos = { x: number | null; y: number | null; centerX: number | null; centerY: number | null };
   type RoadPos = { x: number | null; y: number | null; angle: number | null };
 
   type Town = {
@@ -91,6 +113,7 @@ declare global {
 
   type Structure = Town | Road;
   type StructureMap = { [key: Structure["id"]]: Structure };
+  type StructureSeparateIdMap = { [key: SingleIndexedId]: { road: Road; town: Town } };
 
   type PlayerResources = Record<Resource, number>;
   type Player = {
@@ -102,6 +125,10 @@ declare global {
     setTowns: Setter<Town[]>;
     roads: Accessor<Road[]>;
     setRoads: Setter<Road[]>;
+    developmentCards: Array<{
+      card: DevelopmentCard;
+      played: boolean;
+    }>;
   };
 
   type Stats = Array<{
@@ -115,38 +142,29 @@ declare global {
   type SetupPhase = {
     players: Player[];
     phase: "setup";
+    rolls?: never;
     turn: {
       player: number;
       order: "first" | "second";
       town: Town | null;
       road: Road | null;
+      rolledProduction?: never;
+      playedDevelopmentCard?: never;
     };
   };
 
   type GamePhase = {
     players: Player[];
     phase: "game";
+    rolls: Roll[];
     turn: {
       player: number;
       order?: never;
       town?: never;
       road?: never;
+      rolledProduction: boolean;
+      playedDevelopmentCard: boolean;
     };
-  };
-
-  type State = {
-    hexes: {
-      array: Hex[];
-      byId: { [hexId: Hex["id"]]: Hex };
-      layout: Hex[][];
-      valueMap: { [value: number]: Hex[] };
-    };
-    structures: {
-      array: Structure[];
-      byId: StructureMap;
-      keys: { towns: TownId[]; roads: RoadId[] };
-    };
-    game: SetupPhase | GamePhase;
   };
 
   type Roll = {
@@ -155,9 +173,30 @@ declare global {
     roll: number;
   };
 
+  type State = {
+    hexes: {
+      array: Hex[];
+      byId: { [hexId: Hex["id"]]: Hex };
+      byIdx: { [hexIdx: Hex["idx"]]: Hex };
+      layout: Hex[][];
+      valueMap: { [value: number]: Hex[] };
+    };
+    structures: {
+      array: Structure[];
+      byId: StructureMap;
+      keys: { towns: TownId[]; roads: RoadId[] };
+    };
+    harbors: Harbor[];
+    game: SetupPhase | GamePhase;
+  };
+
   type ResourceSummary = Record<Hex["type"], number>;
   type PlayerResourceSummary = { [diceValue: number]: ResourceSummary };
   type PlayerResourceSummaryIterative = {
     [diceValue: number]: Array<[Hex["type"], resourceCount: number]>;
+  };
+
+  type DevelopmentCard = {
+    type: "knight" | "victory_point" | "monopoly" | "road_building" | "year_of_plenty";
   };
 }

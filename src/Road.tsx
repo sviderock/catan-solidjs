@@ -1,5 +1,5 @@
 import { type Ref } from "solid-js";
-import { shadeHexColor } from "./utils/utils";
+import { shadeHexColor } from "./utils";
 import { twMerge } from "tailwind-merge";
 
 type RoadProps = Road & {

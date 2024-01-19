@@ -86,7 +86,44 @@ export function calculateTown(town: Town, target: HTMLDivElement): TownPos {
   const centerY = (intersection.top + intersection.bottom) / 2;
 
   return {
+    centerX,
+    centerY,
     x: centerX - townHalfWidth,
     y: centerY - townHalfHeight
+  };
+}
+
+export function calculateHarbor(
+  harbor: Harbor,
+  refs: Record<string, HTMLDivElement | undefined>
+): HarborPos {
+  const target = refs[harbor.id]!;
+  const dock1Ref = refs[harbor.dockIds[0]];
+  const dock2Ref = refs[harbor.dockIds[1]];
+  const harborHalfWidth = target.offsetWidth / 2;
+  const harborHalfHeight = target.offsetHeight / 2;
+  const ax = harbor.towns[0].pos().centerX!;
+  const ay = harbor.towns[0].pos().centerY!;
+  const bx = harbor.towns[1].pos().centerX!;
+  const by = harbor.towns[1].pos().centerY!;
+  const x = (bx + ax) / 2 + (Math.sqrt(3) / 2) * (by - ay);
+  const y = (by + ay) / 2 - (Math.sqrt(3) / 2) * (bx - ax);
+
+  const dock1: HarborPos["dock1"] = {
+    x: (ax + x) / 2 - (dock1Ref?.offsetWidth || 0) / 2,
+    y: (ay + y) / 2 - (dock1Ref?.offsetHeight || 0) / 2,
+    angle: findAngle(ax, ay, x, y)
+  };
+  const dock2: HarborPos["dock2"] = {
+    x: (bx + x) / 2 - (dock2Ref?.offsetWidth || 0) / 2,
+    y: (by + y) / 2 - (dock2Ref?.offsetHeight || 0) / 2,
+    angle: findAngle(bx, by, x, y)
+  };
+
+  return {
+    x: x - harborHalfWidth,
+    y: y - harborHalfHeight,
+    dock1,
+    dock2
   };
 }

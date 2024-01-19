@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { Colors } from "../constants";
 import { Boards } from "../constants/boards";
 import { getNeighbourHex } from "./neighbour";
-import { getStructureId, type GetStructureId } from "./utils";
+import { getStructureId, type GetStructureId } from ".";
 
 function idx(i: number) {
   if (i > 5) return 0;
@@ -11,7 +11,8 @@ function idx(i: number) {
 }
 
 function getHexes(): State["hexes"] {
-  const hexes = Boards.A.reduce<State["hexes"]>(
+  let idx = 0;
+  const hexes = Boards.A.board.reduce<State["hexes"]>(
     (acc, hexRow, rowIdx, arr) => {
       hexRow.forEach(({ type, value }, colIdx) => {
         const id: Hex["id"] = `${rowIdx}.${colIdx}`;
@@ -24,11 +25,12 @@ function getHexes(): State["hexes"] {
           sizeToEdge: -1,
           edges: []
         });
+
         const hex: Hex = {
           id,
           type,
           value,
-          idx: rowIdx + colIdx,
+          idx,
           row: rowIdx,
           col: colIdx,
           rowLen: hexRow.length,
@@ -45,14 +47,16 @@ function getHexes(): State["hexes"] {
 
         acc.array.push(hex);
         acc.byId[hex.id] = hex;
+        acc.byIdx[hex.idx] = hex;
         acc.layout[rowIdx] ||= [];
         acc.layout[rowIdx]![colIdx] = hex;
         acc.valueMap[hex.value] ||= [];
         acc.valueMap[hex.value]!.push(hex);
+        idx++;
       });
       return acc;
     },
-    { array: [], byId: {}, layout: [], valueMap: {} }
+    { array: [], byId: {}, byIdx: {}, layout: [], valueMap: {} }
   );
 
   hexes.array.forEach((hex) => {
@@ -68,7 +72,7 @@ function getHexes(): State["hexes"] {
 function createTown(ids: GetStructureId<"town">, idx: number, hexes: Town["hexes"]): Town {
   const [level, setLevel] = createSignal<TownLevel>("settlement");
   const [pos, setPos] = createSignal<TownPos>(
-    { x: null, y: null },
+    { x: null, y: null, centerY: null, centerX: null },
     { equals: (prev, next) => prev.x === next.x && prev.y === next.y }
   );
 
@@ -134,13 +138,20 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
           acc.byId[townIds.id] = town;
           acc.array.push(town);
           acc.keys.towns.push(townIds.id);
+          townIds.separatedIds.forEach((id) => {
+            acc.bySeparateId[id] ||= {} as any;
+            acc.bySeparateId[id]!.town = town;
+          });
           townIdx++;
         }
-
         if (!acc.byId[roadIds.id]) {
           acc.byId[roadIds.id] = road;
           acc.array.push(road);
           acc.keys.roads.push(roadIds.id);
+          roadIds.separatedIds.forEach((id) => {
+            acc.bySeparateId[id] ||= {} as any;
+            acc.bySeparateId[id]!.road = road;
+          });
           roadIdx++;
         }
 
@@ -153,6 +164,7 @@ function getStructures(hexes: ReturnType<typeof getHexes>) {
     {
       array: [] as Structure[],
       byId: {} as StructureMap,
+      bySeparateId: {} as StructureSeparateIdMap,
       keys: {
         towns: [] as TownId[],
         roads: [] as RoadId[]
@@ -219,16 +231,44 @@ function processBetweenTowns(
     }, []);
 }
 
-function generatePlayer(idx: number, withResources?: boolean) {
+function getHarbors(hexes: ReturnType<typeof getHexes>, structures: ReturnType<typeof getStructures>) {
+  return Boards.A.harbors.map((harbor, idx): Harbor => {
+    const [townA, townB] = harbor.towns;
+    const [pos, setPos] = createSignal<HarborPos>({
+      x: null,
+      y: null,
+      dock1: { x: null, y: null, angle: null },
+      dock2: { x: null, y: null, angle: null }
+    });
+    const id = `harbor:${idx}`;
+    const hexIdA = hexes.byIdx[townA.hex]!.id;
+    const hexIdB = hexes.byIdx[townB.hex]!.id;
+    const townRefA = structures.bySeparateId[`${hexIdA}-${townA.town}`]!.town;
+    const townRefB = structures.bySeparateId[`${hexIdB}-${townB.town}`]!.town;
+
+    return {
+      id,
+      idx,
+      dockIds: [`dock:${id}-0`, `dock:${id}-1`],
+      type: harbor.type,
+      towns: [townRefA, townRefB],
+      pos,
+      setPos
+    };
+  });
+}
+
+function generatePlayer(idx: number, withResources?: boolean): Player {
   const [towns, setTowns] = createSignal<Town[]>([]);
   const [roads, setRoads] = createSignal<Road[]>([]);
   const [resources, setResources] = createSignal<PlayerResources>({
-    brick: withResources ? 100 : 0,
-    grain: withResources ? 100 : 0,
-    lumber: withResources ? 100 : 0,
-    ore: withResources ? 100 : 0,
-    wool: withResources ? 100 : 0
+    brick: withResources ? 99 : 0,
+    grain: withResources ? 99 : 0,
+    lumber: withResources ? 99 : 0,
+    ore: withResources ? 99 : 0,
+    wool: withResources ? 99 : 0
   });
+
   return {
     name: `Player ${idx + 1}`,
     color: Colors[idx]!,
@@ -237,7 +277,8 @@ function generatePlayer(idx: number, withResources?: boolean) {
     towns,
     setTowns,
     roads,
-    setRoads
+    setRoads,
+    developmentCards: []
   };
 }
 
@@ -286,7 +327,7 @@ function getHalfSetup(structures: ReturnType<typeof getStructures>): SetupPhase 
 }
 
 function getStartedGame(structures: ReturnType<typeof getStructures>): State["game"] {
-  const players: Player[] = generatePlayers(4, true);
+  const players: Player[] = generatePlayers(4);
   const towns = structures.array.filter((s): s is Town => s.type === "town");
   const roads = structures.array.filter((s): s is Road => s.type === "road");
 
@@ -301,9 +342,12 @@ function getStartedGame(structures: ReturnType<typeof getStructures>): State["ga
 
   return {
     phase: "game",
+    rolls: [],
     players,
     turn: {
-      player: 0
+      player: 0,
+      rolledProduction: false,
+      playedDevelopmentCard: false
     }
   };
 }
@@ -312,6 +356,7 @@ export function getInitialState(phase?: "game" | "half"): State {
   console.time("state");
   const hexes = getHexes();
   const structures = getStructures(hexes);
+  const harbors = getHarbors(hexes, structures);
 
   const game =
     phase === "game"
@@ -320,5 +365,6 @@ export function getInitialState(phase?: "game" | "half"): State {
         ? getHalfSetup(structures)
         : getSetupGame();
   console.timeEnd("state");
-  return { hexes, structures, game };
+
+  return { hexes, structures, harbors, game };
 }

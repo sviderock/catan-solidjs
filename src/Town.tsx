@@ -1,5 +1,5 @@
 import { type Ref } from "solid-js";
-import { shadeHexColor } from "./utils/utils";
+import { shadeHexColor } from "./utils";
 import { twMerge } from "tailwind-merge";
 
 export type TownProps = Town & {
@@ -7,6 +7,7 @@ export type TownProps = Town & {
   canBuild: boolean;
   occupiedBy?: Player;
   currentPlayer: Player;
+  harbor?: Harbor;
   debug?: boolean;
   onClick: () => void;
 };
@@ -21,7 +22,7 @@ export default function Town(props: TownProps) {
         "absolute h-[--town-size] w-[--town-size] cursor-pointer rounded-full transition hover:scale-110",
 
         props.debug &&
-          `flex items-center justify-center border-green-900 bg-green-100 opacity-60 before:absolute before:h-[1px] before:w-[100%] before:bg-yellow-600 before:content-[''] after:absolute after:top-0 after:flex after:h-[100%] after:w-[1px] after:items-center after:justify-center after:bg-yellow-700 after:content-[attr(data-after)]`,
+          "flex items-center justify-center border-[length:--town-border-width] border-green-900 bg-green-100 opacity-60 before:absolute before:h-[1px] before:w-[100%] before:bg-yellow-600 before:content-[''] after:absolute after:top-0 after:flex after:h-[100%] after:w-[1px] after:items-center after:justify-center after:bg-yellow-700 after:content-[attr(data-after)]",
 
         props.canBuild &&
           !props.occupiedBy &&
@@ -29,6 +30,7 @@ export default function Town(props: TownProps) {
 
         !props.canBuild &&
           !props.occupiedBy &&
+          !props.debug &&
           "pointer-events-none cursor-default border-transparent opacity-0",
 
         !!props.occupiedBy &&

@@ -1,170 +1,32 @@
-import { For, Match, Switch, batch, createEffect, createMemo, createSignal, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { For, Match, Switch, batch, createEffect, onMount } from "solid-js";
+import { createStore, produce } from "solid-js/store";
+import Dock from "./Harbor/Dock";
+import Harbor from "./Harbor/Harbor";
 import Hexagon from "./Hexagon/Hexagon";
+import Interface from "./Interface/Interface";
 import Road from "./Road";
-import Stats from "./Stats";
 import Town from "./Town";
-import { Limit, ResourceIcon } from "./constants";
+import { Limit } from "./constants";
 import { debug } from "./state";
-import { calculateHex, calculateRoad, calculateTown } from "./utils/calculations";
+import { calculateHarbor, calculateHex, calculateRoad, calculateTown } from "./utils/calculations";
 import { getInitialState } from "./utils/initial_state";
-import { matches, rollDice, shadeHexColor } from "./utils/utils";
 import { usePlayer } from "./utils/use_player";
-import { useResources } from "./utils/use_resources";
+import useStructures from "./utils/use_structures";
+import { matches, rollDice } from "./utils";
 
 export default function Board() {
-  const refs = {} as Record<Hex["id"] | Structure["id"], HTMLDivElement | undefined>;
+  const refs = {} as Record<string, HTMLDivElement | undefined>;
   const [state, setState] = createStore(getInitialState("game"));
-  const [diceRolls, setDiceRolls] = createSignal<Roll[]>([]);
-  const { haveResourcesFor } = useResources(state);
-  const { currentPlayer, nextPlayerIdx, stats, currentPlayerStats } = usePlayer(state);
+  const { occupied, occupiedBy, canBuild, harbor } = useStructures(state);
+  const { currentPlayer, nextPlayerIdx, currentPlayerStats, playersResourceSummary } = usePlayer(state);
 
-  const occupiedStructures = createMemo(() => {
-    return state.game.players.reduce(
-      (acc, player, playerIdx) => {
-        const structures = [...player.roads(), ...player.towns()];
-
-        if (state.game.phase === "setup" && player === currentPlayer()) {
-          if (state.game.turn.town) structures.push(state.game.turn.town!);
-          if (state.game.turn.road) structures.push(state.game.turn.road!);
-        }
-
-        acc.byPlayer[playerIdx] = structures;
-        acc.list.push(...structures);
-        acc.listByPlayer.push(structures);
-        structures.forEach((s) => {
-          acc.byId[s.id] = state.game.players[playerIdx]!;
-        });
-
-        return acc;
-      },
-      {
-        list: [] as Structure[],
-        byPlayer: {} as { [playerIdx: number]: Structure[] },
-        listByPlayer: [] as Array<Structure[]>,
-        byId: {} as { [structureId: Structure["id"]]: Player }
-      }
+  function roll() {
+    const newRoll = rollDice(state.game.rolls?.at(-1)?.roll);
+    setState(
+      "game",
+      "rolls",
+      produce((rolls) => rolls?.push(newRoll))
     );
-  });
-
-  function occupied(id: Structure["id"]): boolean {
-    return !!occupiedStructures().byId[id];
-  }
-
-  function occupiedBy(id: Structure["id"]) {
-    return occupiedStructures().byId[id];
-  }
-
-  const disabledStructures = createMemo(() => {
-    return occupiedStructures().list.reduce(
-      (acc, s) => {
-        if (s.type === "town") {
-          s.closestTowns.forEach((town) => (acc[town.id] = true));
-          return acc;
-        }
-
-        const myRoad = occupiedBy(s.id) === currentPlayer();
-        const occupiedTownNearby = s.towns.find(
-          (town) => occupied(town.id) && occupiedBy(town.id) !== currentPlayer()
-        );
-        const nextRoadsNearOccupiedTown = s.roads.filter(
-          (r) => !occupied(r.id) && r.towns.some((t) => t === occupiedTownNearby)
-        );
-
-        if (myRoad && nextRoadsNearOccupiedTown.length) {
-          nextRoadsNearOccupiedTown.forEach((r) => (acc[r.id] = true));
-        }
-
-        return acc;
-      },
-      {} as { [structureId: Structure["id"]]: boolean }
-    );
-  });
-
-  function disabled(id: Structure["id"]): boolean {
-    return !!disabledStructures()[id];
-  }
-
-  function townValue(town: Town) {
-    return town.level() === "city" ? 2 : 1;
-  }
-
-  function countPotentialResources(towns: Town[], playerSummary: PlayerResourceSummary) {
-    towns.forEach((town) => {
-      town.hexes.forEach(({ hex }) => {
-        playerSummary[hex.value] ||= { brick: 0, grain: 0, desert: 0, lumber: 0, wool: 0, ore: 0 };
-        playerSummary[hex.value]![hex.type] += townValue(town);
-      });
-    });
-  }
-
-  const playersResourceSummary = createMemo(() => {
-    return state.game.players.reduce<PlayerResourceSummary[]>((acc, player, playerIdx) => {
-      acc[playerIdx] ||= {};
-      countPotentialResources(player.towns(), acc[playerIdx]!);
-      return acc;
-    }, []);
-  });
-
-  const buildableStructures = createMemo(() => {
-    const { phase, turn } = state.game;
-
-    if (phase === "setup") {
-      if (turn.town) {
-        const roads = turn.road ? [turn.road] : turn.town.roads;
-        return [turn.town, ...roads];
-      }
-
-      return state.structures.array.reduce<Structure[]>((acc, s) => {
-        // No roads are available on setup phase until you place a settlement
-        if (s.type === "road") return acc;
-
-        // Skip if trying to place settlement occupied by someone NOT current player
-        if (occupiedBy(s.id) && occupiedBy(s.id) !== currentPlayer()) return acc;
-
-        // Skip if trying to place second settlement on the place of the first
-        if (occupiedBy(s.id) === currentPlayer() && state.game.turn.order === "second") return acc;
-
-        // Skip if town is disabled due to 2-roads distance rule
-        if (disabled(s.id)) return acc;
-
-        acc.push(s);
-        return acc;
-      }, []);
-    }
-
-    return occupiedStructures().byPlayer[turn.player]!.flatMap((s) => {
-      const structures: Structure[] = [];
-
-      const noMoreRoads = stats()[turn.player]!.roads === Limit.Roads;
-      if (!noMoreRoads && haveResourcesFor("road")) {
-        const roads = noMoreRoads
-          ? []
-          : s.roads.filter((road) => !occupied(road.id) && !disabled(road.id));
-        structures.push(...roads);
-      }
-
-      const noMoreSettlements = stats()[turn.player]!.settlements === Limit.Settlements;
-      if (!noMoreSettlements && haveResourcesFor("settlement")) {
-        const towns =
-          noMoreSettlements || !s.towns
-            ? []
-            : s.towns.filter((road) => !occupied(road.id) && !disabled(road.id));
-        structures.push(...towns);
-      }
-
-      if (s.type === "town" && s.level() === "settlement" && haveResourcesFor("city")) {
-        structures.push(s);
-      }
-
-      return structures;
-    });
-  });
-
-  const buildableStructureIds = createMemo(() => buildableStructures().map((s) => s.id));
-
-  function canBuild(s: Structure): boolean {
-    return buildableStructureIds().includes(s.id);
   }
 
   function build(s: Structure) {
@@ -205,6 +67,7 @@ export default function Board() {
 
       // If upgrading your own settlement to city then only fetch resources from player
       if (s.type === "town" && occupied(s.id) && occupiedBy(s.id) === currentPlayer()) {
+        s.setLevel(() => "city");
         currentPlayer().setResources((resources) => ({
           ...resources,
           grain: resources.grain - 2,
@@ -236,6 +99,12 @@ export default function Board() {
         }
       }
     });
+
+    state.harbors.forEach((harbor) => {
+      const pos = calculateHarbor(harbor, refs);
+      harbor.setPos(pos);
+    });
+
     console.timeEnd("calculations");
   }
 
@@ -253,7 +122,14 @@ export default function Board() {
           state.game.turn.road &&
           state.game.turn.town
         ) {
-          setState("game", { phase: "game", turn: { player: state.game.turn.player } });
+          setState("game", {
+            phase: "game",
+            turn: {
+              player: state.game.turn.player,
+              rolledProduction: false,
+              playedDevelopmentCard: false
+            }
+          });
           return;
         }
 
@@ -279,13 +155,12 @@ export default function Board() {
   onMount(() => recalculate());
 
   createEffect(() => {
-    const lastRoll = diceRolls().at(-1);
+    const lastRoll = state.game.rolls?.at(-1)?.roll;
     if (!lastRoll) return;
 
     playersResourceSummary().forEach((player, playerIdx) => {
-      if (!player[lastRoll.roll]) return;
-
-      const newResources = player[lastRoll.roll]!;
+      if (!player[lastRoll]) return;
+      const newResources = player[lastRoll]!;
       state.game.players[playerIdx]!.setResources((resources) => ({
         brick: resources.brick + newResources.brick,
         lumber: resources.lumber + newResources.lumber,
@@ -302,10 +177,10 @@ export default function Board() {
       <div
         class="flex h-full w-full flex-col items-center justify-center"
         style={{
-          background: "radial-gradient(closest-side, #fde68a 40%, #60a5fa 65%, #2463eb 100%)"
+          background: "radial-gradient(closest-side, #fde68a 40%, #60a5fa 60%, #2463eb 100%)"
         }}
       >
-        <div class="relative flex scale-[1] flex-col flex-wrap items-center justify-center">
+        <div class="relative flex flex-col flex-wrap items-center justify-center p-[5rem]">
           <For each={state.hexes.layout}>
             {(hexRow) => (
               <div class="flex">
@@ -335,6 +210,7 @@ export default function Board() {
                       occupiedBy={occupiedBy(town().id)}
                       canBuild={canBuild(town())}
                       currentPlayer={currentPlayer()}
+                      harbor={harbor(town().id)}
                       onClick={() => {
                         batch(() => {
                           if (state.game.phase === "setup") {
@@ -344,19 +220,7 @@ export default function Board() {
                             });
                           }
 
-                          const canBuildCity =
-                            occupiedBy(town().id) === currentPlayer() &&
-                            town().level() === "settlement" &&
-                            currentPlayerStats().cities < Limit.Cities;
-
-                          if (canBuildCity) {
-                            town().setLevel(() => "city");
-                            return;
-                          }
-
-                          if (!occupied(town().id)) {
-                            build(town());
-                          }
+                          build(town());
                         });
                       }}
                     />
@@ -373,10 +237,6 @@ export default function Board() {
                       occupiedBy={occupiedBy(road().id)}
                       currentPlayer={currentPlayer()}
                       onClick={() => {
-                        // if (!unoccupied(road().id)) return;
-                        // if (state.game.phase === "game" && occupied(road().id)) return;
-                        // if (occupiedBy(road().id) && currentPlayer() !== occupiedBy(road().id)) return;
-
                         batch(() => {
                           if (state.game.phase === "setup") {
                             return setState("game", "turn", {
@@ -396,119 +256,32 @@ export default function Board() {
               </Switch>
             )}
           </For>
+
+          <For each={state.harbors}>
+            {(harbor) => (
+              <>
+                <Dock ref={refs[harbor.dockIds[0]]!} pos={harbor.pos().dock1} />
+                <Dock ref={refs[harbor.dockIds[1]]!} pos={harbor.pos().dock2} />
+                <Harbor
+                  debug={debug()}
+                  {...harbor}
+                  ref={refs[harbor.id]!}
+                  dock1Ref={refs[harbor.dockIds[0]]!}
+                  dock2Ref={refs[harbor.dockIds[1]]!}
+                />
+              </>
+            )}
+          </For>
         </div>
       </div>
 
-      <div class="flex justify-between bg-dark">
-        <div>
-          <div class="flex flex-col gap-4 rounded-tl-lg bg-dark p-4 text-[1rem] text-blue-100">
-            <div class="flex flex-col gap-2">
-              <div class="flex w-full justify-between">
-                <span>Current Player:</span>
-                <strong style={{ color: currentPlayer().color }}>{currentPlayer().name}</strong>
-              </div>
-
-              <Switch>
-                <Match when={matches(state.game, (game): game is SetupPhase => game.phase === "setup")}>
-                  {(game) => (
-                    <>
-                      <div class="flex flex-col">
-                        <span>
-                          Town Placed: <strong>{game().turn.town ? "Yes" : "No"}</strong>
-                        </span>
-                        <span>
-                          Road Placed: <strong>{game().turn.road ? "Yes" : "No"}</strong>
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        disabled={!game().turn.town || !game().turn.road}
-                        onClick={() => endTurn()}
-                        style={{
-                          "--color": currentPlayer().color,
-                          "--color-hover": shadeHexColor(currentPlayer().color, -0.25)
-                        }}
-                        class="w-full rounded-lg border border-[--color] bg-[--color] px-4 py-1 text-center text-sm font-medium text-blue-100 transition-colors hover:border-[color:--color-hover] hover:bg-[--color-hover] hover:text-white disabled:pointer-events-none disabled:bg-[--color-hover] disabled:opacity-25"
-                      >
-                        End Turn
-                      </button>
-                    </>
-                  )}
-                </Match>
-                <Match when={matches(state.game, (game): game is GamePhase => game.phase === "game")}>
-                  {(game) => (
-                    <div class="flex flex-col gap-4">
-                      <div class="flex flex-col gap-1 divide-y rounded-sm border bg-gray-800 px-4 py-1">
-                        <span class="text-[1.2rem]">Building Costs</span>
-                        <div class="flex items-center justify-between py-1">
-                          <span>Road</span>
-                          <span>
-                            {ResourceIcon.lumber}
-                            {ResourceIcon.brick}
-                          </span>
-                        </div>
-                        <div class="flex items-center justify-between py-1">
-                          <span>Settlement</span>
-                          <span>
-                            {ResourceIcon.lumber}
-                            {ResourceIcon.brick}
-                            {ResourceIcon.grain}
-                            {ResourceIcon.wool}
-                          </span>
-                        </div>
-                        <div class="flex items-center justify-between py-1">
-                          <span>City</span>
-                          <span>
-                            {ResourceIcon.grain}
-                            {ResourceIcon.grain}
-                            {ResourceIcon.ore}
-                            {ResourceIcon.ore}
-                            {ResourceIcon.ore}
-                          </span>
-                        </div>
-                        <div class="flex items-center justify-between py-1">
-                          <span>Development Card</span>
-                          <span>
-                            {ResourceIcon.grain}
-                            {ResourceIcon.wool}
-                            {ResourceIcon.ore}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div class="flex justify-between gap-2">
-                        <button
-                          class="rounded-lg border px-4 py-1"
-                          onClick={() => {
-                            setDiceRolls((rolls) => [...rolls, rollDice(rolls.at(-1)?.roll)]);
-                          }}
-                        >
-                          Roll Dice: <strong>{diceRolls().at(-1)?.roll}</strong>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => endTurn()}
-                          style={{
-                            "--color": currentPlayer().color,
-                            "--color-hover": shadeHexColor(currentPlayer().color, -0.25)
-                          }}
-                          class="rounded-lg border border-[--color] bg-[--color] px-4 py-1 text-center text-sm font-medium text-blue-100 transition-colors hover:border-[color:--color-hover] hover:bg-[--color-hover] hover:text-white disabled:pointer-events-none disabled:bg-[--color-hover] disabled:opacity-25"
-                        >
-                          End Turn
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </Match>
-              </Switch>
-            </div>
-          </div>
-        </div>
-
-        <Stats stats={stats()} />
-      </div>
+      <Interface
+        state={state}
+        currentPlayer={currentPlayer()}
+        endTurn={endTurn}
+        roll={roll}
+        currentPlayerStats={currentPlayerStats()}
+      />
     </div>
   );
 }

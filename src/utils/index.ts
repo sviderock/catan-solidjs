@@ -1,3 +1,6 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
 export function getRandomType() {
   const hexTypes: Hex["type"][] = ["brick", "grain", "lumber", "ore", "wool"];
   const idx = Math.floor(Math.random() * hexTypes.length);
@@ -11,7 +14,7 @@ export function matches<S extends T, T = unknown>(e: T, predicate: (e: T) => e i
 export type GetStructureId<T extends Structure["type"]> = ReturnType<typeof getStructureId<T>>;
 export function getStructureId<
   T extends Structure["type"],
-  R = { id: T extends TownType ? TownId : RoadId; indexedId: IndexedId }
+  R = { id: T extends TownType ? TownId : RoadId; separatedIds: SingleIndexedId[] }
 >(params: { type: T; hexes: Omit<Structure["hexes"][number], "indexedId">[] }): R {
   const concatenated = [...params.hexes]
     .sort((a, b) => +a.hex.id - +b.hex.id)
@@ -20,7 +23,7 @@ export function getStructureId<
 
   return {
     id: `${params.type}:${concatenated}`,
-    indexedId: concatenated
+    separatedIds: params.hexes.map((hex) => `${hex.hex.id}-${hex.roadIdx ?? hex.townIdx}`)
   } as R;
 }
 
@@ -44,10 +47,13 @@ export function shadeHexColor(color: string, percent: number) {
   );
 }
 
-export function rollDice(prevRoll?: number) {
+export function rollDice(prevRoll?: number): { a: number; b: number; roll: number } {
   const a = Math.floor(Math.random() * 6) + 1;
   const b = Math.floor(Math.random() * 6) + 1;
   const roll = a + b;
-  if (prevRoll === roll) return rollDice(prevRoll);
-  return { a, b, roll };
+  return prevRoll === roll ? rollDice(prevRoll) : { a, b, roll };
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }
