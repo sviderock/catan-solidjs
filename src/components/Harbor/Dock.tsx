@@ -1,6 +1,6 @@
 import { type Ref } from "solid-js";
-import { SandColor } from "../constants";
-import { shadeHexColor } from "../utils";
+import { SandColor } from "../../constants";
+import { shadeHexColor } from "../../utils";
 
 interface Props {
   ref: Ref<HTMLDivElement>;

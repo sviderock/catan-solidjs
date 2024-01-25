@@ -1,5 +1,5 @@
 import { createMemo, createSignal, onCleanup, onMount } from "solid-js";
-import { DiceColors } from "./constants";
+import { DiceColors } from "../constants";
 
 interface Props {
   color: 0 | 1;

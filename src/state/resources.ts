@@ -1,8 +1,7 @@
-import { usePlayer } from "./use_player";
+import { createRoot } from "solid-js";
+import { currentPlayer } from "./player";
 
-export function useResources(state: State) {
-  const { currentPlayer } = usePlayer(state);
-
+export const { haveResourcesFor } = createRoot(() => {
   function haveResourcesForRoad(resources: PlayerResources): boolean {
     return resources.brick >= 1 && resources.lumber >= 1;
   }
@@ -36,4 +35,4 @@ export function useResources(state: State) {
   }
 
   return { haveResourcesFor };
-}
+});

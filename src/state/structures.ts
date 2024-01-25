@@ -1,12 +1,23 @@
-import { createMemo } from "solid-js";
-import { usePlayer } from "./use_player";
-import { useResources } from "./use_resources";
+import { createMemo, createRoot } from "solid-js";
 import { Limit } from "../constants";
+import { state } from "./initial_state";
+import { currentPlayer, stats } from "./player";
+import { haveResourcesFor } from "./resources";
 
-export default function useStructures(state: State) {
-  const { currentPlayer, stats } = usePlayer(state);
-  const { haveResourcesFor } = useResources(state);
+export const {
+  occupiedStructures,
+  occupied,
+  occupiedBy,
 
+  disabledStructures,
+  disabled,
+
+  buildableStructures,
+  buildableStructureIds,
+  canBuild,
+
+  harbor
+} = createRoot(() => {
   const occupiedStructures = createMemo(() => {
     return state.game.players.reduce(
       (acc, player, playerIdx) => {
@@ -134,15 +145,8 @@ export default function useStructures(state: State) {
     return buildableStructureIds().includes(s.id);
   }
 
-  const townHarbors = createMemo(() =>
-    state.harbors.reduce<{ [townId: TownId]: Harbor }>((acc, harbor) => {
-      harbor.towns.forEach((town) => (acc[town.id] = harbor));
-      return acc;
-    }, {})
-  );
-
   function harbor(id: TownId) {
-    return townHarbors()[id];
+    return state.harbors.townToHarbor[id];
   }
 
   return {
@@ -157,7 +161,6 @@ export default function useStructures(state: State) {
     buildableStructureIds,
     canBuild,
 
-    townHarbors,
     harbor
   };
-}
+});

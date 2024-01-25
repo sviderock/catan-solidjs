@@ -1,21 +1,38 @@
-import Board from "./Board";
-import { debug, setDebug } from "./state";
+import { Switch } from "@/components/ui/switch";
+import { PlayerColours } from "@/constants";
+import { shadeHexColor } from "@/utils";
+import Board from "./components/Board";
+import { currentPlayer, debug, setDebug } from "./state";
+import { onMount } from "solid-js";
 
 export default function App() {
+  onMount(() => {
+    document.body.setAttribute(
+      "style",
+      `
+        --current-player-color: ${currentPlayer().color};
+        --current-player-color-darker: ${shadeHexColor(currentPlayer().color, -0.25)};
+        --current-player-color-text: ${shadeHexColor(currentPlayer().color, -0.5)};
+        --player-color-0: ${PlayerColours[0]};
+        --player-color-darker-0: ${shadeHexColor(PlayerColours[0]!, -0.25)};
+        --player-color-text-0: ${shadeHexColor(PlayerColours[0]!, -0.5)};
+        --player-color-1: ${PlayerColours[1]};
+        --player-color-darker-1: ${shadeHexColor(PlayerColours[1]!, -0.25)};
+        --player-color-text-1: ${shadeHexColor(PlayerColours[1]!, -0.5)};
+        --player-color-2: ${PlayerColours[2]};
+        --player-color-darker-2: ${shadeHexColor(PlayerColours[2]!, -0.25)};
+        --player-color-text-2: ${shadeHexColor(PlayerColours[2]!, -0.5)};
+        --player-color-3: ${PlayerColours[3]};
+        --player-color-darker-3: ${shadeHexColor(PlayerColours[3]!, -0.25)};
+        --player-color-text-3: ${shadeHexColor(PlayerColours[3]!, -0.5)};
+      `
+    );
+  });
+
   return (
     <main class="flex h-full w-full items-center justify-center bg-blue-600">
       <Board />
-
-      <label class="absolute left-10 top-10 inline-flex cursor-pointer items-center">
-        <input
-          type="checkbox"
-          checked={debug()}
-          class="peer sr-only"
-          onChange={({ target }) => setDebug(target.checked)}
-        />
-        <div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-400 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-blue-800 rtl:peer-checked:after:-translate-x-full" />
-        <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Debug</span>
-      </label>
+      <Switch checked={debug()} onChange={setDebug} label="Debug" class="absolute left-10 top-10 " />
     </main>
   );
 }

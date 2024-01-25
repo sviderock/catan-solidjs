@@ -1,6 +1,7 @@
 import { Show, type JSX, type Ref } from "solid-js";
-import { Resource, SandColor } from "../constants";
+import { Resource, SandColor } from "../../constants";
 import HexDebug from "./HexDebug";
+import { backgroundImageSvg } from "@/utils";
 
 export type HexagonProps = Hex & {
   debug?: boolean;
@@ -10,12 +11,6 @@ export type HexagonProps = Hex & {
 };
 
 export default function Hexagon(props: HexagonProps) {
-  const backgroundImage = () => {
-    const iconCode = Resource[props.type].iconCode.replace("#", "%23");
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="0" y="40" font-size="40" fill="black">${iconCode}</text></svg>`;
-    return `url('data:image/svg+xml,${svg}')`;
-  };
-
   return (
     <div ref={props.ref} class="relative mx-[-0.5px] my-[calc(var(--hex-size)*0.125*-1)]">
       <HexDiv style={{ color: SandColor }}>
@@ -26,11 +21,11 @@ export default function Hexagon(props: HexagonProps) {
           }}
         >
           <HexDiv
-            class="select-none"
+            class="select-none bg-[image:--bg]"
             style={{
               color: Resource[props.type].color,
               "--size": "calc(var(--hex-size) * 0.8)",
-              "background-image": props.value !== 7 ? backgroundImage() : ""
+              "--bg": props.value !== 7 ? backgroundImageSvg(Resource[props.type].iconCode) : ""
             }}
           >
             <Show

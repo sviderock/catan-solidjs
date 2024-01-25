@@ -121,3 +121,7 @@
   src: url(/src/assets/fonts/Geist/GeistVariableVF.woff2) format("woff2");
   font-display: swap;
 }
+
+* {
+  min-width: 0;
+}

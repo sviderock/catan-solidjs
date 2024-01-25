@@ -90,13 +90,23 @@ const config: Config = {
         "content-hide": {
           from: { opacity: "1", transform: "scale(1)" },
           to: { opacity: "0", transform: "scale(0.96)" }
+        },
+        "slide-down": {
+          from: { height: "0" },
+          to: { height: "var(--kb-collapsible-content-height)" }
+        },
+        "slide-up": {
+          from: { height: "var(--kb-collapsible-content-height)" },
+          to: { height: "0" }
         }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "content-show": "content-show 0.2s ease-out",
-        "content-hide": "content-hide 0.2s ease-out"
+        "content-hide": "content-hide 0.2s ease-out",
+        "slide-down": "slide-down 0.2s ease-out",
+        "slide-up": "slide-up 0.2s ease-out"
       }
     }
   },

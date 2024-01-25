@@ -1,32 +1,52 @@
-import { For, Match, Switch, batch, createEffect, onMount } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { For, Match, Switch, batch, createEffect, createMemo, createSignal, onMount } from "solid-js";
+import { produce } from "solid-js/store";
 import Dock from "./Harbor/Dock";
 import Harbor from "./Harbor/Harbor";
 import Hexagon from "./Hexagon/Hexagon";
 import Interface from "./Interface/Interface";
 import Road from "./Road";
 import Town from "./Town";
-import { Limit } from "./constants";
-import { debug } from "./state";
-import { calculateHarbor, calculateHex, calculateRoad, calculateTown } from "./utils/calculations";
-import { getInitialState } from "./utils/initial_state";
-import { usePlayer } from "./utils/use_player";
-import useStructures from "./utils/use_structures";
-import { matches, rollDice } from "./utils";
+import { Limit } from "../constants";
+import { matches, rollDice } from "../utils";
+import { calculateHarbor, calculateHex, calculateRoad, calculateTown } from "../utils/calculations";
+import {
+  currentPlayer,
+  nextPlayerIdx,
+  currentPlayerStats,
+  playersResourceSummary,
+  debug,
+  setState,
+  state,
+  occupied,
+  occupiedBy,
+  canBuild,
+  harbor
+} from "../state";
+import { type TradeSide } from "@/components/Interface/Trade";
 
 export default function Board() {
   const refs = {} as Record<string, HTMLDivElement | undefined>;
-  const [state, setState] = createStore(getInitialState("game"));
-  const { occupied, occupiedBy, canBuild, harbor } = useStructures(state);
-  const { currentPlayer, nextPlayerIdx, currentPlayerStats, playersResourceSummary } = usePlayer(state);
+  const [isRolling, setIsRolling] = createSignal(false);
+
+  const rollStatus = createMemo((): RollStatus => {
+    if (isRolling()) return "rolling";
+    return state.game.turn.rolledProduction ? "rolled" : "not_rolled";
+  });
 
   function roll() {
-    const newRoll = rollDice(state.game.rolls?.at(-1)?.roll);
-    setState(
-      "game",
-      "rolls",
-      produce((rolls) => rolls?.push(newRoll))
-    );
+    setIsRolling(true);
+    setTimeout(() => {
+      batch(() => {
+        const newRoll = rollDice(state.game.rolls?.at(-1)?.roll);
+        setState("game", "turn", "rolledProduction", true);
+        setState(
+          "game",
+          "rolls",
+          produce((rolls) => rolls?.push(newRoll))
+        );
+        setIsRolling(false);
+      });
+    }, 1000);
   }
 
   function build(s: Structure) {
@@ -100,7 +120,7 @@ export default function Board() {
       }
     });
 
-    state.harbors.forEach((harbor) => {
+    state.harbors.array.forEach((harbor) => {
       const pos = calculateHarbor(harbor, refs);
       harbor.setPos(pos);
     });
@@ -139,16 +159,19 @@ export default function Board() {
           return;
         }
 
-        return batch(() => {
-          setState("game", "turn", (turn) => ({
-            player: turn.order === "first" ? turn.player + 1 : turn.player - 1,
-            town: null,
-            road: null
-          }));
-        });
+        setState("game", "turn", (turn) => ({
+          player: turn.order === "first" ? turn.player + 1 : turn.player - 1,
+          town: null,
+          road: null
+        }));
+        return;
       }
 
-      setState("game", "turn", "player", nextPlayerIdx());
+      setState("game", "turn", {
+        player: nextPlayerIdx(),
+        rolledProduction: false,
+        playedDevelopmentCard: false
+      });
     });
   }
 
@@ -257,7 +280,7 @@ export default function Board() {
             )}
           </For>
 
-          <For each={state.harbors}>
+          <For each={state.harbors.array}>
             {(harbor) => (
               <>
                 <Dock ref={refs[harbor.dockIds[0]]!} pos={harbor.pos().dock1} />
@@ -276,11 +299,31 @@ export default function Board() {
       </div>
 
       <Interface
-        state={state}
-        currentPlayer={currentPlayer()}
         endTurn={endTurn}
-        roll={roll}
-        currentPlayerStats={currentPlayerStats()}
+        onTrade={(playerIdx, trade) => {
+          batch(() => {
+            currentPlayer().setResources((res) => ({
+              brick: res.brick - trade.give.brick + trade.take.brick,
+              lumber: res.lumber - trade.give.lumber + trade.take.lumber,
+              wool: res.wool - trade.give.wool + trade.take.wool,
+              grain: res.grain - trade.give.grain + trade.take.grain,
+              ore: res.ore - trade.give.ore + trade.take.ore
+            }));
+
+            state.game.players[playerIdx]!.setResources((res) => ({
+              brick: res.brick + trade.give.brick - trade.take.brick,
+              lumber: res.lumber + trade.give.lumber - trade.take.lumber,
+              wool: res.wool + trade.give.wool - trade.take.wool,
+              grain: res.grain + trade.give.grain - trade.take.grain,
+              ore: res.ore + trade.give.ore - trade.take.ore
+            }));
+          });
+        }}
+        productionRoll={{
+          roll,
+          lastRoll: state.game.rolls?.at(-1)?.roll,
+          status: rollStatus()
+        }}
       />
     </div>
   );

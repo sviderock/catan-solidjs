@@ -57,3 +57,14 @@ export function rollDice(prevRoll?: number): { a: number; b: number; roll: numbe
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function idx(i: number) {
+  if (i > 5) return 0;
+  if (i < 0) return 5;
+  return i;
+}
+
+export const backgroundImageSvg = (iconCode: string, size = 40, viewBoxSize = 100) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${viewBoxSize}" height="${viewBoxSize}" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}"><text x="0" y="40" font-size="${size}" fill="black">${iconCode.replace("#", "%23")}</text></svg>`;
+  return `url('data:image/svg+xml,${svg}')`;
+};

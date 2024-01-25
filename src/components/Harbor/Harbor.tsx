@@ -1,5 +1,5 @@
 import { type Ref } from "solid-js";
-import { Resource } from "../constants";
+import { Resource } from "../../constants";
 
 type Props = Harbor & {
   ref: Ref<HTMLDivElement>;

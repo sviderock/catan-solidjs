@@ -2,10 +2,10 @@ import { splitProps, type Component } from "solid-js";
 
 import { Tooltip as TooltipPrimitive } from "@kobalte/core";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 const Tooltip: Component<TooltipPrimitive.TooltipRootProps> = (props) => {
-  return <TooltipPrimitive.Root gutter={4} openDelay={200} {...props} />;
+  return <TooltipPrimitive.Root gutter={4} openDelay={100} {...props} />;
 };
 
 const TooltipTrigger = TooltipPrimitive.Trigger;

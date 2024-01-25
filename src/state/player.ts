@@ -1,33 +1,50 @@
-import { createMemo } from "solid-js";
+import { createMemo, createRoot } from "solid-js";
+import { state } from "./initial_state";
 
-export function usePlayer(state: State) {
+export type Stats = ReturnType<typeof stats>;
+
+export const {
+  currentPlayer,
+  opponents,
+  nextPlayerIdx,
+  stats,
+  currentPlayerStats,
+  playersResourceSummary
+} = createRoot(() => {
   const currentPlayer = createMemo(() => state.game.players[state.game.turn.player]!);
+
+  const opponents = createMemo(() =>
+    state.game.players.filter((_, idx) => idx !== state.game.turn.player)
+  );
 
   const nextPlayerIdx = createMemo(() =>
     state.game.turn.player === state.game.players.length - 1 ? 0 : state.game.turn.player + 1
   );
 
-  const stats = createMemo((): Stats => {
+  const stats = createMemo(() => {
     return state.game.players.map((player) => {
       const roads = player.roads().length;
       const settlements = player.towns().filter((town) => town.level() === "settlement").length;
       const cities = player.towns().filter((town) => town.level() === "city").length;
       const points = settlements + cities * 2;
-      return { roads, settlements, cities, points, player };
+
+      const harbors = player.towns().reduce<Harbor[]>((acc, town) => {
+        const harbor = state.harbors.townToHarbor[town.id];
+        if (harbor) acc.push(harbor);
+        return acc;
+      }, []);
+
+      return { roads, settlements, cities, points, player, harbors } as const;
     });
   });
 
   const currentPlayerStats = createMemo(() => stats()[state.game.turn.player]!);
 
-  function townValue(town: Town) {
-    return town.level() === "city" ? 2 : 1;
-  }
-
   function countPotentialResources(towns: Town[], playerSummary: PlayerResourceSummary) {
     towns.forEach((town) => {
       town.hexes.forEach(({ hex }) => {
         playerSummary[hex.value] ||= { brick: 0, grain: 0, desert: 0, lumber: 0, wool: 0, ore: 0 };
-        playerSummary[hex.value]![hex.type] += townValue(town);
+        playerSummary[hex.value]![hex.type] += town.level() === "city" ? 2 : 1;
       });
     });
   }
@@ -40,5 +57,5 @@ export function usePlayer(state: State) {
     }, []);
   });
 
-  return { currentPlayer, nextPlayerIdx, stats, currentPlayerStats, playersResourceSummary };
-}
+  return { currentPlayer, opponents, nextPlayerIdx, stats, currentPlayerStats, playersResourceSummary };
+});

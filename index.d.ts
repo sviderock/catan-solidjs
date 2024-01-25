@@ -117,6 +117,7 @@ declare global {
 
   type PlayerResources = Record<Resource, number>;
   type Player = {
+    idx: number;
     name: string;
     color: string;
     resources: Accessor<PlayerResources>;
@@ -130,14 +131,6 @@ declare global {
       played: boolean;
     }>;
   };
-
-  type Stats = Array<{
-    roads: number;
-    settlements: number;
-    cities: number;
-    points: number;
-    player: Player;
-  }>;
 
   type SetupPhase = {
     players: Player[];
@@ -167,6 +160,7 @@ declare global {
     };
   };
 
+  type RollStatus = "not_rolled" | "rolling" | "rolled";
   type Roll = {
     a: number;
     b: number;
@@ -186,7 +180,11 @@ declare global {
       byId: StructureMap;
       keys: { towns: TownId[]; roads: RoadId[] };
     };
-    harbors: Harbor[];
+    harbors: {
+      array: Harbor[];
+      byId: { [harborId: Harbor["id"]]: Harbor };
+      townToHarbor: { [townId: TownId]: Harbor };
+    };
     game: SetupPhase | GamePhase;
   };
 
