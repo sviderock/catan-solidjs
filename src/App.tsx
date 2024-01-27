@@ -1,7 +1,7 @@
 import { Switch } from "@/components/ui/switch";
 import { PlayerColours } from "@/constants";
 import { shadeHexColor } from "@/utils";
-import Board from "./components/Board";
+import Board from "./components/Board/Board";
 import { currentPlayer, debug, setDebug } from "./state";
 import { onMount } from "solid-js";
 

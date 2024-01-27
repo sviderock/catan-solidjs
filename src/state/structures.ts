@@ -24,8 +24,8 @@ export const {
         const structures = [...player.roads(), ...player.towns()];
 
         if (state.game.phase === "setup" && player === currentPlayer()) {
-          if (state.game.turn.town) structures.push(state.game.turn.town!);
-          if (state.game.turn.road) structures.push(state.game.turn.road!);
+          if (state.game.town) structures.push(state.game.town!);
+          if (state.game.road) structures.push(state.game.road!);
         }
 
         acc.byPlayer[playerIdx] = structures;
@@ -85,12 +85,10 @@ export const {
   }
 
   const buildableStructures = createMemo(() => {
-    const { turn } = state.game;
-
     if (state.game.phase === "setup") {
-      if (turn.town) {
-        const roads = turn.road ? [turn.road] : turn.town.roads;
-        return [turn.town, ...roads];
+      if (state.game.town) {
+        const roads = state.game.road ? [state.game.road] : state.game.town.roads;
+        return [state.game.town, ...roads];
       }
 
       return state.structures.array.reduce<Structure[]>((acc, s) => {
@@ -101,7 +99,7 @@ export const {
         if (occupiedBy(s.id) && occupiedBy(s.id) !== currentPlayer()) return acc;
 
         // Skip if trying to place second settlement on the place of the first
-        if (occupiedBy(s.id) === currentPlayer() && state.game.turn.order === "second") return acc;
+        if (occupiedBy(s.id) === currentPlayer() && state.game.order === "second") return acc;
 
         // Skip if town is disabled due to 2-roads distance rule
         if (disabled(s.id)) return acc;
@@ -111,10 +109,10 @@ export const {
       }, []);
     }
 
-    return occupiedStructures().byPlayer[turn.player]!.flatMap((s) => {
+    return occupiedStructures().byPlayer[state.game.currentPlayer]!.flatMap((s) => {
       const structures: Structure[] = [];
 
-      const noMoreRoads = stats()[turn.player]!.roads === Limit.Roads;
+      const noMoreRoads = stats()[state.game.currentPlayer]!.roads === Limit.Roads;
       if (!noMoreRoads && haveResourcesFor("road")) {
         const roads = noMoreRoads
           ? []
@@ -122,7 +120,7 @@ export const {
         structures.push(...roads);
       }
 
-      const noMoreSettlements = stats()[turn.player]!.settlements === Limit.Settlements;
+      const noMoreSettlements = stats()[state.game.currentPlayer]!.settlements === Limit.Settlements;
       if (!noMoreSettlements && haveResourcesFor("settlement")) {
         const towns =
           noMoreSettlements || !s.towns

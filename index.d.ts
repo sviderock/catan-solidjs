@@ -132,60 +132,44 @@ declare global {
     }>;
   };
 
-  type SetupPhase = {
+  type BasePhaseProps = {
     players: Player[];
+    currentPlayer: number;
+    robber: Hex["id"];
+  };
+
+  type SetupPhase = BasePhaseProps & {
     phase: "setup";
+    order: "first" | "second";
+    town: Town | null;
+    road: Road | null;
+
     rolls?: never;
-    turn: {
-      player: number;
-      order: "first" | "second";
-      town: Town | null;
-      road: Road | null;
-      rolledProduction?: never;
-      playedDevelopmentCard?: never;
-    };
+    rollStatus?: never;
+    playedDevelopmentCard?: never;
   };
 
-  type GamePhase = {
-    players: Player[];
-    phase: "game";
+  type TurnPhase = BasePhaseProps & {
+    phase: "turn";
     rolls: Roll[];
-    turn: {
-      player: number;
-      order?: never;
-      town?: never;
-      road?: never;
-      rolledProduction: boolean;
-      playedDevelopmentCard: boolean;
-    };
+    rollStatus: RollStatus;
+    playedDevelopmentCard: boolean;
+
+    order?: never;
+    town?: never;
+    road?: never;
   };
 
+  type Roll = { a: number; b: number; roll: number };
   type RollStatus = "not_rolled" | "rolling" | "rolled";
-  type Roll = {
-    a: number;
-    b: number;
-    roll: number;
-  };
 
-  type State = {
-    hexes: {
-      array: Hex[];
-      byId: { [hexId: Hex["id"]]: Hex };
-      byIdx: { [hexIdx: Hex["idx"]]: Hex };
-      layout: Hex[][];
-      valueMap: { [value: number]: Hex[] };
-    };
-    structures: {
-      array: Structure[];
-      byId: StructureMap;
-      keys: { towns: TownId[]; roads: RoadId[] };
-    };
-    harbors: {
-      array: Harbor[];
-      byId: { [harborId: Harbor["id"]]: Harbor };
-      townToHarbor: { [townId: TownId]: Harbor };
-    };
-    game: SetupPhase | GamePhase;
+  type RobberPos = { x: number | null; y: number | null };
+  type Robber = {
+    id: "robber";
+    status: "drop_resources" | "select_hex" | "select_player" | "stealing_resource" | "placed";
+    hex: Hex;
+    pos: Accessor<RobberPos>;
+    setPos: Setter<RobberPos>;
   };
 
   type ResourceSummary = Record<Hex["type"], number>;

@@ -4,7 +4,7 @@ import { type GetStructures } from "./get_structures";
 import { Boards } from "@/constants/boards";
 
 export default function getHarbors(hexes: GetHexes, structures: GetStructures) {
-  return Boards.A.harbors.reduce<State["harbors"]>(
+  return Boards.A.harbors.reduce(
     (acc, { towns, type }, idx) => {
       const [townA, townB] = towns;
       const [pos, setPos] = createSignal<HarborPos>({
@@ -35,6 +35,10 @@ export default function getHarbors(hexes: GetHexes, structures: GetStructures) {
       acc.townToHarbor[townRefB.id] = harbor;
       return acc;
     },
-    { array: [], byId: {}, townToHarbor: {} }
+    {
+      array: [] as Harbor[],
+      byId: {} as { [harborId: Harbor["id"]]: Harbor },
+      townToHarbor: {} as { [townId: TownId]: Harbor }
+    }
   );
 }

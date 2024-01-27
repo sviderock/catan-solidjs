@@ -11,14 +11,14 @@ export const {
   currentPlayerStats,
   playersResourceSummary
 } = createRoot(() => {
-  const currentPlayer = createMemo(() => state.game.players[state.game.turn.player]!);
+  const currentPlayer = createMemo(() => state.game.players[state.game.currentPlayer]!);
 
   const opponents = createMemo(() =>
-    state.game.players.filter((_, idx) => idx !== state.game.turn.player)
+    state.game.players.filter((_, idx) => idx !== state.game.currentPlayer)
   );
 
   const nextPlayerIdx = createMemo(() =>
-    state.game.turn.player === state.game.players.length - 1 ? 0 : state.game.turn.player + 1
+    state.game.currentPlayer === state.game.players.length - 1 ? 0 : state.game.currentPlayer + 1
   );
 
   const stats = createMemo(() => {
@@ -38,7 +38,7 @@ export const {
     });
   });
 
-  const currentPlayerStats = createMemo(() => stats()[state.game.turn.player]!);
+  const currentPlayerStats = createMemo(() => stats()[state.game.currentPlayer]!);
 
   function countPotentialResources(towns: Town[], playerSummary: PlayerResourceSummary) {
     towns.forEach((town) => {

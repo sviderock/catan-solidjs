@@ -127,3 +127,16 @@ export function calculateHarbor(
     dock2
   };
 }
+
+export function calculateRobber(
+  robber: Robber,
+  refs: Record<string, HTMLDivElement | undefined>
+): RobberPos {
+  const target = refs[robber.id]!;
+  const robberHalfWidth = target.offsetWidth / 2;
+  const robberHalfHeight = target.offsetHeight / 2;
+  return {
+    x: robber.hex.calc().center.x - robberHalfWidth,
+    y: robber.hex.calc().center.y - robberHalfHeight
+  };
+}

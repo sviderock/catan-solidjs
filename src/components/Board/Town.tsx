@@ -1,6 +1,5 @@
 import { type Ref } from "solid-js";
-import { shadeHexColor } from "../utils";
-import { twMerge } from "tailwind-merge";
+import { shadeHexColor, cn } from "@/utils";
 
 export type TownProps = Town & {
   ref: Ref<HTMLDivElement>;
@@ -18,7 +17,7 @@ export default function Town(props: TownProps) {
     <div
       ref={props.ref}
       data-after={props.debug ? props.idx : ""}
-      class={twMerge(
+      class={cn(
         "absolute h-[--town-size] w-[--town-size] cursor-pointer rounded-full transition hover:scale-110",
 
         props.debug &&

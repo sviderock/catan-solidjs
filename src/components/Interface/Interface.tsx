@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { currentPlayer, currentPlayerStats, state } from "@/state";
+import { currentPlayer, currentPlayerStats, endTurn, lastRoll, roll, state } from "@/state";
 import { As } from "@kobalte/core";
 import { TbShip } from "solid-icons/tb";
 import { Index, Match, Switch } from "solid-js";
@@ -9,28 +9,15 @@ import { matches } from "../../utils";
 import BuildingCosts from "./BuildingCosts";
 import Trade from "./Trade";
 
-export interface InterfaceProps {
-  endTurn: () => void;
-  onTrade: (
-    playerIdx: number,
-    trade: { give: Record<Resource, number>; take: Record<Resource, number> }
-  ) => void;
-  productionRoll: {
-    roll: () => void;
-    lastRoll: number | undefined;
-    status: RollStatus;
-  };
-}
-
-export default function Interface(props: InterfaceProps) {
+export default function Interface() {
   return (
     <div>
       <Switch>
         <Match when={matches(state.game, (game): game is SetupPhase => game.phase === "setup")}>
-          {(game) => <SetupPhase game={game()} {...props} />}
+          {(game) => <SetupPhase game={game()} />}
         </Match>
-        <Match when={matches(state.game, (game): game is GamePhase => game.phase === "game")}>
-          {(game) => <GamePhase game={game()} {...props} />}
+        <Match when={matches(state.game, (game): game is TurnPhase => game.phase === "turn")}>
+          {(game) => <TurnPhase game={game()} />}
         </Match>
       </Switch>
     </div>
@@ -46,7 +33,7 @@ const CurrentPlayer = () => {
   );
 };
 
-const SetupPhase = (props: InterfaceProps & { game: SetupPhase }) => {
+const SetupPhase = (props: { game: SetupPhase }) => {
   return (
     <div class="flex justify-between bg-dark">
       <div class="flex flex-col gap-4 rounded-tl-lg bg-dark p-4 text-[1rem] text-blue-100">
@@ -55,17 +42,17 @@ const SetupPhase = (props: InterfaceProps & { game: SetupPhase }) => {
 
           <div class="flex flex-col">
             <span>
-              Town Placed: <strong>{props.game.turn.town ? "Yes" : "No"}</strong>
+              Town Placed: <strong>{props.game.town ? "Yes" : "No"}</strong>
             </span>
             <span>
-              Road Placed: <strong>{props.game.turn.road ? "Yes" : "No"}</strong>
+              Road Placed: <strong>{props.game.road ? "Yes" : "No"}</strong>
             </span>
           </div>
 
           <button
             type="button"
-            disabled={!props.game.turn.town || !props.game.turn.road}
-            onClick={() => props.endTurn()}
+            disabled={!props.game.town || !props.game.road}
+            onClick={() => endTurn()}
             class="w-full rounded-lg border border-[--current-player-color] bg-[--current-player-color] px-4 py-1 text-center text-sm font-medium text-blue-100 transition-colors hover:border-[color:--current-player-color-darker] hover:bg-[--current-player-color-darker] hover:text-white disabled:pointer-events-none disabled:bg-[--current-player-color-darker] disabled:opacity-25"
           >
             End Turn
@@ -76,14 +63,14 @@ const SetupPhase = (props: InterfaceProps & { game: SetupPhase }) => {
   );
 };
 
-const GamePhase = (props: InterfaceProps & { game: GamePhase }) => {
+const TurnPhase = (props: { game: TurnPhase }) => {
   const rollText = () => {
-    if (props.productionRoll.status === "not_rolled") return "Click to roll";
-    if (props.productionRoll.status === "rolling") return "Rolling production...";
+    if (props.game.rollStatus === "not_rolled") return "Click to roll";
+    if (props.game.rollStatus === "rolling") return "Rolling production...";
     return (
       <div class="flex items-center justify-between">
         <span>
-          Rolled <strong>{props.productionRoll.lastRoll}</strong>!
+          Rolled <strong>{lastRoll()}</strong>!
         </span>
       </div>
     );
@@ -143,13 +130,13 @@ const GamePhase = (props: InterfaceProps & { game: GamePhase }) => {
 
           <Button
             class="col-span-full bg-green-500 hover:bg-green-600"
-            disabled={props.productionRoll.status === "rolled"}
-            onClick={() => props.productionRoll.roll()}
+            disabled={props.game.rollStatus === "rolled"}
+            onClick={() => roll()}
           >
             {rollText()}
           </Button>
 
-          <Trade {...props} />
+          <Trade />
 
           <Tooltip placement="right" disabled={!!currentPlayerStats().harbors.length}>
             <TooltipTrigger asChild>
@@ -179,8 +166,8 @@ const GamePhase = (props: InterfaceProps & { game: GamePhase }) => {
 
           <button
             type="button"
-            onClick={() => props.endTurn()}
-            disabled={props.productionRoll.status !== "rolled"}
+            onClick={() => endTurn()}
+            disabled={props.game.rollStatus !== "rolled"}
             class="col-span-full rounded-lg border border-[--current-player-color] bg-[--current-player-color] px-4 py-1 text-center text-sm font-medium text-[--current-player-color-text] transition-colors hover:border-[color:--current-player-color-darker] hover:bg-[--current-player-color-darker] hover:text-white disabled:pointer-events-none disabled:bg-[--current-player-color-darker] disabled:opacity-25"
           >
             End Turn

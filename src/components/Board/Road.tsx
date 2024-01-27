@@ -1,6 +1,5 @@
 import { type Ref } from "solid-js";
-import { shadeHexColor } from "../utils";
-import { twMerge } from "tailwind-merge";
+import { shadeHexColor, cn } from "@/utils";
 
 type RoadProps = Road & {
   ref: Ref<HTMLDivElement>;
@@ -20,7 +19,7 @@ export default function Road(props: RoadProps) {
         if (!props.canBuild) return;
         props.onClick();
       }}
-      class={twMerge(
+      class={cn(
         "absolute h-[--road-height] w-[--road-width] cursor-pointer rounded-[--road-border-round] border-[length:--road-border-width] transition hover:scale-105",
 
         props.debug &&

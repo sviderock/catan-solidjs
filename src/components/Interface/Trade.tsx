@@ -1,4 +1,3 @@
-import { type InterfaceProps } from "@/components/Interface/Interface";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
@@ -14,7 +13,7 @@ import { RadioGroup, RadioGroupItem, RadioGroupItemLabel } from "@/components/ui
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RESOURCES, Resource } from "@/constants";
-import { currentPlayer, opponents, state } from "@/state";
+import { currentPlayer, opponents, state, trade } from "@/state";
 import { cn } from "@/utils";
 import { AiTwotoneMinusCircle, AiTwotonePlusCircle } from "solid-icons/ai";
 import { FaSolidAnglesLeft, FaSolidAnglesRight, FaSolidArrowRightArrowLeft } from "solid-icons/fa";
@@ -36,7 +35,7 @@ export type TradeSide = Array<[Resource, count: number]>;
 
 const initialTrade = () => RESOURCES.map((res): [Resource, count: number] => [res, 0]);
 
-export default function Trade(props: InterfaceProps) {
+export default function Trade() {
   const [popoverOpen, setPopoverOpen] = createSignal(false);
   const [playerSelected, setPlayerSelected] = createSignal("");
   const [give, setGive] = createSignal(initialTrade());
@@ -53,12 +52,12 @@ export default function Trade(props: InterfaceProps) {
   }
 
   function finishTrade() {
-    const trade = { give: {}, take: {} } as Parameters<typeof props.onTrade>[1];
-    give().forEach(([res, count]) => (trade.give[res] = count));
-    take().forEach(([res, count]) => (trade.take[res] = count));
+    const finalTrade = { give: {}, take: {} } as Parameters<typeof trade>[1];
+    give().forEach(([res, count]) => (finalTrade.give[res] = count));
+    take().forEach(([res, count]) => (finalTrade.take[res] = count));
 
     batch(() => {
-      props.onTrade(+playerSelected(), trade);
+      trade(+playerSelected(), finalTrade);
       setPopoverOpen(false);
     });
   }
@@ -151,7 +150,7 @@ export default function Trade(props: InterfaceProps) {
           <CollapsibleContent>
             <div class="flex min-w-0 items-center justify-between gap-5">
               <div class="flex w-full flex-col items-center justify-between gap-3">
-                <ResourceSelector {...props} resources={give} setResources={setGive} />
+                <ResourceSelector resources={give} setResources={setGive} />
                 <Badge
                   variant="outline"
                   class="w-full justify-between gap-2 bg-[--current-player-color] text-[1rem] text-[color:--current-player-color-text]"
@@ -161,7 +160,7 @@ export default function Trade(props: InterfaceProps) {
               </div>
 
               <div class="flex w-full flex-col items-center justify-between gap-3">
-                <ResourceSelector {...props} resources={take} setResources={setTake} />
+                <ResourceSelector resources={take} setResources={setTake} />
                 <Badge
                   variant="outline"
                   class="w-full justify-between gap-2 bg-[--color] text-[1rem] text-[color:--text]"
@@ -214,11 +213,7 @@ export default function Trade(props: InterfaceProps) {
   );
 }
 
-type ResourceSelectorProps = InterfaceProps & {
-  resources: Accessor<TradeSide>;
-  setResources: Setter<TradeSide>;
-};
-function ResourceSelector(props: ResourceSelectorProps) {
+function ResourceSelector(props: { resources: Accessor<TradeSide>; setResources: Setter<TradeSide> }) {
   return (
     <div>
       <Index each={RESOURCES}>

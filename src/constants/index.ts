@@ -81,3 +81,6 @@ export const Resource: Record<
     borderColor: shadeHexColor("#feb536", -0.3)
   }
 };
+
+export const ROBBER_ROLL = 7;
+export const DESERT_VALUE = ROBBER_ROLL;

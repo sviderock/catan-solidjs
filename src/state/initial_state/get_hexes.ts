@@ -4,9 +4,9 @@ import { createSignal } from "solid-js";
 
 export type GetHexes = ReturnType<typeof getHexes>;
 
-export default function getHexes(): State["hexes"] {
+export default function getHexes() {
   let idx = 0;
-  const hexes = Boards.A.board.reduce<State["hexes"]>(
+  const hexes = Boards.A.board.reduce(
     (acc, hexRow, rowIdx, arr) => {
       hexRow.forEach(({ type, value }, colIdx) => {
         const id: Hex["id"] = `${rowIdx}.${colIdx}`;
@@ -39,6 +39,10 @@ export default function getHexes(): State["hexes"] {
           setCalc
         };
 
+        if (type === "desert") {
+          acc.desert = hex;
+        }
+
         acc.array.push(hex);
         acc.byId[hex.id] = hex;
         acc.byIdx[hex.idx] = hex;
@@ -50,7 +54,14 @@ export default function getHexes(): State["hexes"] {
       });
       return acc;
     },
-    { array: [], byId: {}, byIdx: {}, layout: [], valueMap: {} }
+    {
+      array: [] as Hex[],
+      byId: {} as { [hexId: Hex["id"]]: Hex },
+      byIdx: {} as { [hexIdx: Hex["idx"]]: Hex },
+      layout: [] as Hex[][],
+      valueMap: {} as { [value: number]: Hex[] },
+      desert: {} as Hex
+    }
   );
 
   hexes.array.forEach((hex) => {
