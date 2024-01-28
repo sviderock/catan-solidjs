@@ -15,8 +15,7 @@ export const { build, trade, endTurn, isSetupPhase, lastRoll, roll } = createRoo
     setState("game", "rollStatus", "rolling");
     setTimeout(() => {
       batch(() => {
-        const fakeRoll = { a: 3, b: 4, roll: 7 };
-        const newRoll = fakeRoll || rollDice(state.game.rolls?.at(-1)?.roll);
+        const newRoll = rollDice(state.game.rolls?.at(-1)?.roll);
         const isRobberRoll = newRoll.roll === ROBBER_ROLL;
 
         setState(
