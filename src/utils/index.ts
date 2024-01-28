@@ -64,7 +64,14 @@ export function idx(i: number) {
   return i;
 }
 
-export const backgroundImageSvg = (iconCode: string, size = 40, viewBoxSize = 100) => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${viewBoxSize}" height="${viewBoxSize}" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}"><text x="0" y="40" font-size="${size}" fill="black">${iconCode.replace("#", "%23")}</text></svg>`;
+export const backgroundImageSvg = (iconCode: string, opacity = 1) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><text x="0" y="40" font-size="40" fill-opacity="${opacity}" fill="black">${iconCode.replace("#", "%23")}</text></svg>`;
   return `url('data:image/svg+xml,${svg}')`;
 };
+
+export function hexToRgb(color: string) {
+  const r = color.slice(1, 3);
+  const g = color.slice(3, 5);
+  const b = color.slice(5, 7);
+  return `rgb(${parseInt(r, 16)} ${parseInt(g, 16)} ${parseInt(b, 16)} / var(--tw-bg-opacity))`;
+}

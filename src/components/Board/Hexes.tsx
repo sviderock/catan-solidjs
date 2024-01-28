@@ -33,6 +33,7 @@ export type HexProps = Hex & {
 
 function Hex(props: HexProps) {
   const desert = () => props.value === DESERT_VALUE;
+  const opacity = () => (state.robber.hex.id === props.id ? 0.3 : 1);
 
   return (
     <div ref={props.ref} class="relative mx-[-0.5px] my-[calc(var(--hex-size)*0.125*-1)]">
@@ -48,7 +49,7 @@ function Hex(props: HexProps) {
             style={{
               color: Resource[props.type].color,
               "--size": "calc(var(--hex-size) * 0.8)",
-              "--bg": !desert() ? backgroundImageSvg(Resource[props.type].iconCode) : ""
+              "--bg": !desert() ? backgroundImageSvg(Resource[props.type].iconCode, opacity()) : ""
             }}
           >
             <Show
