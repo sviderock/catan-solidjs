@@ -9,6 +9,7 @@ declare global {
     | `${SingleIndexedId}|${SingleIndexedId}|${SingleIndexedId}`;
   type ConstructedIdOfType<T extends string> = `${T}:${IndexedId}`;
   type Pos = { x: number; y: number };
+  type Rect = { left: number; right: number; top: number; bottom: number };
 
   type HexCalculations = {
     absolute: {
