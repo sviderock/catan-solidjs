@@ -7,6 +7,7 @@ function findAngle(x1: number, y1: number, x2: number, y2: number) {
 
 // https://www.redblobgames.com/grids/hexagons/#basics
 export function calculateHex(target: HTMLDivElement): HexCalculations {
+  const rect = target.getBoundingClientRect();
   const heightSection = target.offsetHeight / 4;
   const sizeToAngle = target.offsetHeight / 2;
   const sizeToEdge = (sizeToAngle * Math.sqrt(3)) / 2;
@@ -38,7 +39,28 @@ export function calculateHex(target: HTMLDivElement): HexCalculations {
     };
   });
 
-  return { center, sizeToAngle, sizeToEdge, heightSection, angles, edges };
+  return {
+    center,
+    sizeToAngle,
+    sizeToEdge,
+    heightSection,
+    angles,
+    edges,
+    left,
+    right,
+    top,
+    bottom,
+    width: target.offsetWidth,
+    height: target.offsetHeight,
+    absolute: {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      centerX: (rect.left + rect.right) / 2,
+      centerY: (rect.top + rect.bottom) / 2
+    }
+  };
 }
 
 export function calculateRoad(road: Road, target: HTMLDivElement): RoadPos {

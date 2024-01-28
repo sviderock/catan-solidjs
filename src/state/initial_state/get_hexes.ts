@@ -13,11 +13,18 @@ export default function getHexes() {
         const [hovered, setHovered] = createSignal(false);
         const [calc, setCalc] = createSignal<HexCalculations>({
           angles: [],
-          center: { x: -1, y: -1 },
-          heightSection: -1,
-          sizeToAngle: -1,
-          sizeToEdge: -1,
-          edges: []
+          edges: [],
+          height: 0,
+          width: 0,
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: 0,
+          center: { x: 0, y: 0 },
+          absolute: { left: 0, right: 0, top: 0, bottom: 0, centerX: 0, centerY: 0 },
+          heightSection: 0,
+          sizeToAngle: 0,
+          sizeToEdge: 0
         });
 
         const hex: Hex = {

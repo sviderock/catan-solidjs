@@ -10,7 +10,7 @@ declare global {
 }
 
 function getRobber(hexes: GetHexes): Robber {
-  const [pos, setPos] = createSignal<RobberPos>({ x: null, y: null });
+  const [pos, setPos] = createSignal<RobberPos>({ x: 0, y: 0 });
   return { id: "robber", status: "placed", hex: hexes.desert, pos, setPos };
 }
 

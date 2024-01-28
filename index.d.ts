@@ -8,9 +8,24 @@ declare global {
     | `${SingleIndexedId}|${SingleIndexedId}`
     | `${SingleIndexedId}|${SingleIndexedId}|${SingleIndexedId}`;
   type ConstructedIdOfType<T extends string> = `${T}:${IndexedId}`;
+  type Pos = { x: number; y: number };
 
   type HexCalculations = {
+    absolute: {
+      centerX: number;
+      centerY: number;
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+    };
     center: { x: number; y: number };
+    height: number;
+    width: number;
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
     sizeToAngle: number;
     sizeToEdge: number;
     heightSection: number;
@@ -163,7 +178,7 @@ declare global {
   type Roll = { a: number; b: number; roll: number };
   type RollStatus = "not_rolled" | "rolling" | "rolled";
 
-  type RobberPos = { x: number | null; y: number | null };
+  type RobberPos = { x: number; y: number };
   type Robber = {
     id: "robber";
     status: "drop_resources" | "select_hex" | "select_player" | "stealing_resource" | "placed";
