@@ -1,5 +1,6 @@
 import { createMemo, createRoot } from "solid-js";
 import { state } from "./initial_state";
+import { EMPTY_RESOURCES } from "@/constants";
 
 export type Stats = ReturnType<typeof stats>;
 
@@ -43,7 +44,7 @@ export const {
   function countPotentialResources(towns: Town[], playerSummary: PlayerResourceSummary) {
     towns.forEach((town) => {
       town.hexes.forEach(({ hex }) => {
-        playerSummary[hex.value] ||= { brick: 0, grain: 0, desert: 0, lumber: 0, wool: 0, ore: 0 };
+        playerSummary[hex.value] ||= { ...EMPTY_RESOURCES, desert: 0 };
         playerSummary[hex.value]![hex.type] += town.level() === "city" ? 2 : 1;
       });
     });

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { RESOURCES, Resource } from "@/constants";
+import { EMPTY_RESOURCES, RESOURCES, Resource } from "@/constants";
 import { cn } from "@/utils";
 import { AiTwotoneMinusCircle, AiTwotonePlusCircle } from "solid-icons/ai";
 import { Index, createSignal } from "solid-js";
@@ -7,16 +7,11 @@ import { Index, createSignal } from "solid-js";
 interface Props {
   resources: PlayerResources;
   onChange: (resources: PlayerResources) => void;
+  disabled?: "add" | "subtract" | "all";
 }
 
 export default function ResourceSelector(props: Props) {
-  const [selectedResources, setSelectedResources] = createSignal<PlayerResources>({
-    brick: 0,
-    grain: 0,
-    lumber: 0,
-    ore: 0,
-    wool: 0
-  });
+  const [selectedResources, setSelectedResources] = createSignal(EMPTY_RESOURCES);
 
   return (
     <div>
@@ -26,6 +21,7 @@ export default function ResourceSelector(props: Props) {
             <Button
               size="icon"
               variant="ghost"
+              disabled={props.disabled === "subtract" || props.disabled === "all"}
               onClick={(e) => {
                 const newCount = selectedResources()[res()] - (e.shiftKey ? 10 : 1);
                 if (newCount < 0) return;
@@ -47,6 +43,7 @@ export default function ResourceSelector(props: Props) {
             <Button
               size="icon"
               variant="ghost"
+              disabled={props.disabled === "add" || props.disabled === "all"}
               onClick={(e) => {
                 const newCount = selectedResources()[res()] + (e.shiftKey ? 10 : 1);
                 if (newCount > props.resources[res()]) return;

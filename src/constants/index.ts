@@ -84,3 +84,10 @@ export const Resource: Record<
 
 export const ROBBER_ROLL = 7;
 export const DESERT_VALUE = ROBBER_ROLL;
+export const EMPTY_RESOURCES: PlayerResources = {
+  brick: 0,
+  lumber: 0,
+  wool: 0,
+  grain: 0,
+  ore: 0
+};

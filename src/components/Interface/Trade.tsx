@@ -13,7 +13,7 @@ import {
 import { RadioGroup, RadioGroupItem, RadioGroupItemLabel } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { RESOURCES } from "@/constants";
+import { EMPTY_RESOURCES, RESOURCES } from "@/constants";
 import { currentPlayer, opponents, state, trade } from "@/state";
 import { cn } from "@/utils";
 import { FaSolidAnglesLeft, FaSolidAnglesRight, FaSolidArrowRightArrowLeft } from "solid-icons/fa";
@@ -22,10 +22,7 @@ import { For, Match, Show, Switch, batch, createMemo, createSignal } from "solid
 
 export type TradeSide = Array<[Resource, count: number]>;
 
-const initialTrade = (): { give: PlayerResources; take: PlayerResources } => ({
-  give: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
-  take: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }
-});
+const initialTrade = () => ({ give: EMPTY_RESOURCES, take: EMPTY_RESOURCES });
 
 export default function Trade() {
   const [finalTrade, setFinalTrade] = createSignal(initialTrade());
