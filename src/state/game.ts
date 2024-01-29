@@ -45,10 +45,7 @@ export const { build, trade, endTurn, isSetupPhase, lastRoll, roll } = createRoo
     }, 1000);
   }
 
-  function trade(
-    playerIdx: number,
-    trade: { give: Record<Resource, number>; take: Record<Resource, number> }
-  ) {
+  function trade<T extends PlayerResources>(playerIdx: number, trade: { give: T; take: T }) {
     batch(() => {
       currentPlayer().setResources((res) => ({
         brick: res.brick - trade.give.brick + trade.take.brick,

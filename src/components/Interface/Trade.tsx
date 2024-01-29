@@ -1,3 +1,4 @@
+import ResourceSelector from "@/components/ResourceSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
@@ -12,53 +13,46 @@ import {
 import { RadioGroup, RadioGroupItem, RadioGroupItemLabel } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { RESOURCES, Resource } from "@/constants";
+import { RESOURCES } from "@/constants";
 import { currentPlayer, opponents, state, trade } from "@/state";
 import { cn } from "@/utils";
-import { AiTwotoneMinusCircle, AiTwotonePlusCircle } from "solid-icons/ai";
 import { FaSolidAnglesLeft, FaSolidAnglesRight, FaSolidArrowRightArrowLeft } from "solid-icons/fa";
 import { IoClose } from "solid-icons/io";
-import {
-  For,
-  Index,
-  Match,
-  Show,
-  Switch,
-  batch,
-  createMemo,
-  createSignal,
-  type Accessor,
-  type Setter
-} from "solid-js";
+import { For, Match, Show, Switch, batch, createMemo, createSignal } from "solid-js";
 
 export type TradeSide = Array<[Resource, count: number]>;
 
-const initialTrade = () => RESOURCES.map((res): [Resource, count: number] => [res, 0]);
+const initialTrade = (): { give: PlayerResources; take: PlayerResources } => ({
+  give: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 },
+  take: { brick: 0, lumber: 0, wool: 0, grain: 0, ore: 0 }
+});
 
 export default function Trade() {
+  const [finalTrade, setFinalTrade] = createSignal(initialTrade());
   const [popoverOpen, setPopoverOpen] = createSignal(false);
   const [playerSelected, setPlayerSelected] = createSignal("");
-  const [give, setGive] = createSignal(initialTrade());
-  const [take, setTake] = createSignal(initialTrade());
-  const giveFiltered = () => give().filter((i) => i[1] > 0);
-  const takeFiltered = () => take().filter((i) => i[1] > 0);
+
+  const giveFiltered = createMemo(() =>
+    RESOURCES.reduce((acc, res) => {
+      const count = finalTrade().give[res];
+      if (count > 0) acc.push([res, count]);
+      return acc;
+    }, [] as TradeSide)
+  );
+
+  const takeFiltered = createMemo(() =>
+    RESOURCES.reduce((acc, res) => {
+      const count = finalTrade().take[res];
+      if (count > 0) acc.push([res, count]);
+      return acc;
+    }, [] as TradeSide)
+  );
 
   function reset() {
     batch(() => {
-      setPlayerSelected("");
-      setGive(initialTrade());
-      setTake(initialTrade());
-    });
-  }
-
-  function finishTrade() {
-    const finalTrade = { give: {}, take: {} } as Parameters<typeof trade>[1];
-    give().forEach(([res, count]) => (finalTrade.give[res] = count));
-    take().forEach(([res, count]) => (finalTrade.take[res] = count));
-
-    batch(() => {
-      trade(+playerSelected(), finalTrade);
       setPopoverOpen(false);
+      setPlayerSelected("");
+      setFinalTrade(initialTrade());
     });
   }
 
@@ -75,17 +69,15 @@ export default function Trade() {
     return giveResource === takeResource && giveCount !== takeCount;
   });
 
-  const tradeIdentical = createMemo(() =>
-    give().every((giveItem, idx) => {
-      const takeItem = take()[idx]!;
-      return giveItem[0] === takeItem[0] && giveItem[1] === takeItem[1];
-    })
-  );
-
-  const joke = () => oneResourceDifferentCount() || tradeIdentical();
+  const joke = createMemo(() => {
+    const tradeIdentical = RESOURCES.every((res) => finalTrade().give[res] === finalTrade().take[res]);
+    return tradeIdentical || oneResourceDifferentCount();
+  });
 
   const disabled = createMemo(() => {
-    return give().every((i) => i[1] === 0) || take().every((i) => i[1] === 0);
+    const giveEmpty = RESOURCES.every((res) => finalTrade().give[res] === 0);
+    const takeEmpty = RESOURCES.every((res) => finalTrade().take[res] === 0);
+    return giveEmpty || takeEmpty;
   });
 
   return (
@@ -103,9 +95,7 @@ export default function Trade() {
 
       <PopoverContent
         class="flex w-[350px] flex-col gap-3"
-        onInteractOutside={(e) => {
-          e.preventDefault();
-        }}
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <PopoverArrow />
 
@@ -150,7 +140,12 @@ export default function Trade() {
           <CollapsibleContent>
             <div class="flex min-w-0 items-center justify-between gap-5">
               <div class="flex w-full flex-col items-center justify-between gap-3">
-                <ResourceSelector resources={give} setResources={setGive} />
+                <ResourceSelector
+                  resources={currentPlayer().resources()}
+                  onChange={(resources) =>
+                    setFinalTrade((finalTrade) => ({ ...finalTrade, give: resources }))
+                  }
+                />
                 <Badge
                   variant="outline"
                   class="w-full justify-between gap-2 bg-[--current-player-color] text-[1rem] text-[color:--current-player-color-text]"
@@ -160,7 +155,14 @@ export default function Trade() {
               </div>
 
               <div class="flex w-full flex-col items-center justify-between gap-3">
-                <ResourceSelector resources={take} setResources={setTake} />
+                <Show when={selectedPlayer()}>
+                  <ResourceSelector
+                    resources={selectedPlayer()!.resources()}
+                    onChange={(resources) =>
+                      setFinalTrade((finalTrade) => ({ ...finalTrade, take: resources }))
+                    }
+                  />
+                </Show>
                 <Badge
                   variant="outline"
                   class="w-full justify-between gap-2 bg-[--color] text-[1rem] text-[color:--text]"
@@ -198,7 +200,15 @@ export default function Trade() {
                   </Tooltip>
                 </Match>
                 <Match when={!disabled()}>
-                  <Button class="bg-green-500 hover:bg-green-600" onClick={finishTrade}>
+                  <Button
+                    class="bg-green-500 hover:bg-green-600"
+                    onClick={() => {
+                      batch(() => {
+                        trade(+playerSelected(), finalTrade());
+                        reset();
+                      });
+                    }}
+                  >
                     <FaSolidArrowRightArrowLeft />
                   </Button>
                 </Match>
@@ -210,50 +220,6 @@ export default function Trade() {
         </div>
       </PopoverContent>
     </Popover>
-  );
-}
-
-function ResourceSelector(props: { resources: Accessor<TradeSide>; setResources: Setter<TradeSide> }) {
-  return (
-    <div>
-      <Index each={RESOURCES}>
-        {(res, idx) => (
-          <div class="flex h-6 w-full items-center justify-between gap-5">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                const [resource, count] = props.resources()[idx]!;
-                if (count <= 0) return;
-                props.setResources((trade) => trade.with(idx, [resource, count - 1]));
-              }}
-            >
-              <AiTwotoneMinusCircle />
-            </Button>
-
-            <div class="flex justify-between gap-2">
-              <span>{Resource[res()].icon}</span>
-              <span class={cn(props.resources()[idx]![1] === 0 && "opacity-30")}>
-                {props.resources()[idx]![1]}
-              </span>
-              <span class="opacity-70">({currentPlayer().resources()[res()]})</span>
-            </div>
-
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                const [resource, count] = props.resources()[idx]!;
-                if (count >= currentPlayer().resources()[res()]) return;
-                props.setResources((trade) => trade.with(idx, [resource, count + 1]));
-              }}
-            >
-              <AiTwotonePlusCircle />
-            </Button>
-          </div>
-        )}
-      </Index>
-    </div>
   );
 }
 
