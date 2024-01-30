@@ -1,18 +1,74 @@
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { EMPTY_RESOURCES, RESOURCES, Resource } from "@/constants";
-import { cn } from "@/utils";
+import { cn, resourceCount } from "@/utils";
 import { AiTwotoneMinusCircle, AiTwotonePlusCircle } from "solid-icons/ai";
-import { Index, createSignal } from "solid-js";
+import {
+  Index,
+  Show,
+  createContext,
+  createEffect,
+  createSignal,
+  splitProps,
+  useContext,
+  type Accessor,
+  type Component,
+  type Context,
+  type JSX,
+  type Setter
+} from "solid-js";
 
-interface Props {
+type Props = {
   resources: PlayerResources;
-  onChange: (resources: PlayerResources) => void;
-  disabled?: "add" | "subtract" | "all";
+  onChange?: (resources: PlayerResources) => void;
+  requiredCount?: number;
+  children?: JSX.Element;
+};
+
+type RSContextProps = ReturnType<typeof makeRSContext>;
+function makeRSContext(props: Props) {
+  const [selectedResources, setSelectedResources] = createSignal(EMPTY_RESOURCES);
+  return {
+    resources: () => props.resources,
+    onChange: () => props.onChange?.(selectedResources()),
+    allSelected: () => {
+      return (
+        props.requiredCount === undefined || resourceCount(selectedResources()) === props.requiredCount
+      );
+    },
+    leftToSelect: () => {
+      if (props.requiredCount === undefined) return null;
+      return props.requiredCount - resourceCount(selectedResources());
+    },
+    addDisabled: () => props.requiredCount === resourceCount(selectedResources()),
+    subtractDisabled: (res: Resource) => selectedResources()[res] === 0,
+    selectedResources,
+    setSelectedResources
+  };
 }
 
-export default function ResourceSelector(props: Props) {
-  const [selectedResources, setSelectedResources] = createSignal(EMPTY_RESOURCES);
+const RSContext = createContext() as Context<RSContextProps>;
 
+function useRSContext(): RSContextProps {
+  const context = useContext(RSContext);
+  if (context === undefined) {
+    throw new Error(
+      "[ResourceSelector]: `useContext` must be used within a `ResourceSelector` component"
+    );
+  }
+  return context;
+}
+
+export function ResourceSelector(props: Props) {
+  const context = makeRSContext(props);
+  return (
+    <RSContext.Provider value={context}>
+      {props.children ?? <ResourceSelectorContent />}
+    </RSContext.Provider>
+  );
+}
+
+export function ResourceSelectorContent() {
+  const context = useRSContext();
   return (
     <div>
       <Index each={RESOURCES}>
@@ -21,12 +77,12 @@ export default function ResourceSelector(props: Props) {
             <Button
               size="icon"
               variant="ghost"
-              disabled={props.disabled === "subtract" || props.disabled === "all"}
+              disabled={context.subtractDisabled(res())}
               onClick={(e) => {
-                const newCount = selectedResources()[res()] - (e.shiftKey ? 10 : 1);
+                const newCount = context.selectedResources()[res()] - (e.shiftKey ? 10 : 1);
                 if (newCount < 0) return;
-                setSelectedResources((resources) => ({ ...resources, [res()]: newCount }));
-                props.onChange(selectedResources());
+                context.setSelectedResources((resources) => ({ ...resources, [res()]: newCount }));
+                context.onChange();
               }}
             >
               <AiTwotoneMinusCircle />
@@ -34,21 +90,21 @@ export default function ResourceSelector(props: Props) {
 
             <div class="flex justify-between gap-2">
               <span>{Resource[res()].icon}</span>
-              <span class={cn(selectedResources()[res()] === 0 && "opacity-30")}>
-                {selectedResources()[res()]}
+              <span class={cn(context.selectedResources()[res()] === 0 && "opacity-30")}>
+                {context.selectedResources()[res()]}
               </span>
-              <span class="opacity-70">({props.resources[res()]})</span>
+              <span class="opacity-70">({context.resources()[res()]})</span>
             </div>
 
             <Button
               size="icon"
               variant="ghost"
-              disabled={props.disabled === "add" || props.disabled === "all"}
+              disabled={context.addDisabled()}
               onClick={(e) => {
-                const newCount = selectedResources()[res()] + (e.shiftKey ? 10 : 1);
-                if (newCount > props.resources[res()]) return;
-                setSelectedResources((resources) => ({ ...resources, [res()]: newCount }));
-                props.onChange(selectedResources());
+                const newCount = context.selectedResources()[res()] + (e.shiftKey ? 10 : 1);
+                if (newCount > context.resources()[res()]) return;
+                context.setSelectedResources((resources) => ({ ...resources, [res()]: newCount }));
+                context.onChange();
               }}
             >
               <AiTwotonePlusCircle />
@@ -59,3 +115,31 @@ export default function ResourceSelector(props: Props) {
     </div>
   );
 }
+
+type RSButtonProps = Omit<ButtonProps, "onClick"> & { onClick: (resources: PlayerResources) => void };
+export const ResourceSelectorButton: Component<RSButtonProps> = (props) => {
+  const [, rest] = splitProps(props, ["onClick", "disabled"]);
+  const context = useRSContext();
+
+  createEffect(() => {
+    console.log(!context.allSelected() || props.disabled, !context.allSelected(), props.disabled);
+  });
+  return (
+    <Button
+      onClick={() => props.onClick(context.selectedResources())}
+      disabled={!context.allSelected() || props.disabled}
+      {...rest}
+    />
+  );
+};
+
+type RSErrorProps = { children: (leftToSelect: number) => JSX.Element; successFallback?: JSX.Element };
+export const ResourceSelectorError: Component<RSErrorProps> = (props) => {
+  const context = useRSContext();
+
+  return (
+    <Show when={!context.allSelected()} fallback={props.successFallback}>
+      {props.children(context.leftToSelect()!)}
+    </Show>
+  );
+};

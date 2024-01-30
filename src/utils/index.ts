@@ -1,3 +1,4 @@
+import { RESOURCES } from "@/constants";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -74,4 +75,8 @@ export function hexToRgb(color: string) {
   const g = color.slice(3, 5);
   const b = color.slice(5, 7);
   return `rgb(${parseInt(r, 16)} ${parseInt(g, 16)} ${parseInt(b, 16)} / var(--tw-bg-opacity))`;
+}
+
+export function resourceCount(resources: PlayerResources) {
+  return RESOURCES.reduce((acc, res) => acc + resources[res], 0);
 }

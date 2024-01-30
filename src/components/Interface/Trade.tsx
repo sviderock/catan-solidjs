@@ -1,4 +1,4 @@
-import ResourceSelector from "@/components/ResourceSelector";
+import { ResourceSelector } from "@/components/ResourceSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
