@@ -1,16 +1,31 @@
-import { Icons } from "@/constants";
-import { refs, state } from "@/state";
-import { cn } from "@/utils";
 import {
+  ResourceSelector,
+  ResourceSelectorButton,
+  ResourceSelectorContent,
+  ResourceSelectorError
+} from "@/components/ResourceSelector";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Icons } from "@/constants";
+import { refs, setState, state } from "@/state";
+import { cn, resourceCount } from "@/utils";
+import { calculateRobber } from "@/utils/calculations";
+import { As } from "@kobalte/core";
+import {
+  For,
+  Match,
   Show,
+  Switch,
   batch,
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
-  onMount,
   splitProps,
   type JSX
 } from "solid-js";
+import { produce } from "solid-js/store";
+import { AiOutlineCheck } from "solid-icons/ai";
 
 // https://github.com/clauderic/dnd-kit/blob/master/packages/core/src/utilities/coordinates/distanceBetweenPoints.ts#L6
 function distanceBetween(p1: Pos, p2: Pos) {
@@ -43,7 +58,13 @@ export default function Robber() {
   const [newHexId, setNewHexId] = createSignal<Hex["id"] | null>(null);
 
   createEffect(() => {
-    if (state.robber.status === "placed") return;
+    const pos = calculateRobber(state.robber, refs);
+    state.robber.setPos(pos);
+  });
+
+  createEffect(() => {
+    const { status } = state.robber;
+    if (status === "placed" || status === "drop_resources" || status === "stealing_resource") return;
 
     const robberRef = refs[state.robber.id]!;
     const widthOffset = robberRef.offsetWidth / 2;
@@ -79,6 +100,13 @@ export default function Robber() {
       batch(() => {
         setIsDragging(false);
         setNewPos({ x: 0, y: 0 });
+        setState(
+          "robber",
+          produce((robber) => {
+            robber.hex = state.hexes.byId[newHexId()!]!;
+            robber.status = "select_player";
+          })
+        );
       });
     }
 
@@ -93,6 +121,11 @@ export default function Robber() {
     });
   });
 
+  const tooltipDisabled = () =>
+    state.robber.status === "placed" ||
+    state.robber.status === "drop_resources" ||
+    state.robber.status === "stealing_resource";
+
   const prognosedNewPos = () => {
     const robberRef = refs[state.robber.id];
     return {
@@ -103,11 +136,23 @@ export default function Robber() {
 
   return (
     <>
-      <RobberCircle
-        ref={refs[state.robber.id]}
-        pos={state.robber.pos()}
-        classList={{ "opacity-50": isDragging() }}
-      />
+      <Tooltip placement="right" disabled={tooltipDisabled()}>
+        <TooltipTrigger asChild>
+          <As
+            component={RobberCircle}
+            ref={refs[state.robber.id]}
+            pos={state.robber.pos()}
+            classList={{ "opacity-50": isDragging() }}
+          />
+        </TooltipTrigger>
+
+        <TooltipContent>
+          <Switch>
+            <Match when={state.robber.status === "select_hex"}>Move me to different hex</Match>
+            <Match when={state.robber.status === "select_player"}>Who do you want to steal from?</Match>
+          </Switch>
+        </TooltipContent>
+      </Tooltip>
 
       <Show when={isDragging() && newHexId() && newHexId() !== state.robber.hex.id}>
         <RobberCircle pos={prognosedNewPos()} class="bg-blue-500 bg-opacity-80" />
@@ -116,6 +161,8 @@ export default function Robber() {
       <Show when={isDragging()}>
         <RobberCircle pos={newPos()} class="fixed" />
       </Show>
+
+      <DropResourcesDialog />
     </>
   );
 }
@@ -133,5 +180,78 @@ function RobberCircle(props: JSX.HTMLAttributes<HTMLDivElement> & { pos: Pos }) 
     >
       {Icons.robber.emoji}
     </div>
+  );
+}
+
+function DropResourcesDialog() {
+  const [playerStatus, setPlayerStatus] = createSignal(
+    state.game.players.map(() => ({ allGood: false, resourcesToDrop: null as PlayerResources | null }))
+  );
+
+  // createEffect(() => {
+  //   if (playerStatus().every((status) => status.allGood)) {
+  //     setState("robber", "status", "select_hex");
+  //   }
+  // });
+
+  return (
+    <Dialog open={state.robber.status === "drop_resources"}>
+      <DialogContent class="grid max-w-[36rem] grid-cols-2 gap-5">
+        <span class="col-span-full text-center text-[1.5rem]">Waiting for players...</span>
+
+        <For each={state.game.players}>
+          {(player, idx) => (
+            <div class="flex flex-col justify-between gap-4 rounded-sm bg-dark p-4">
+              <ResourceSelector
+                resources={player.resources()}
+                requiredCount={Math.floor(resourceCount(player.resources()) / 2)}
+                disabled={playerStatus()[idx()]?.allGood}
+              >
+                <div class="flex flex-col gap-4">
+                  <span
+                    class="rounded-sm bg-[--bg] px-2 text-center text-[color:--color]"
+                    style={{
+                      "--color": `var(--player-color-text-${idx()})`,
+                      "--bg": `var(--player-color-${idx()})`
+                    }}
+                  >
+                    {player.name}
+                  </span>
+
+                  <ResourceSelectorContent />
+                </div>
+
+                <ResourceSelectorError>
+                  {(leftToSelect) => (
+                    <span class="text-center text-red-500">Drop {leftToSelect} more resources</span>
+                  )}
+                </ResourceSelectorError>
+
+                <Show
+                  when={playerStatus()[idx()]?.allGood}
+                  fallback={
+                    <ResourceSelectorButton
+                      class="bg-blue-500 text-white hover:bg-blue-600"
+                      onClick={(resources) => {
+                        setPlayerStatus((status) =>
+                          status.with(idx(), { allGood: true, resourcesToDrop: resources })
+                        );
+                      }}
+                    >
+                      Drop Resources
+                    </ResourceSelectorButton>
+                  }
+                >
+                  <span class="flex items-center justify-between text-green-500">
+                    All good!
+                    <AiOutlineCheck class="fill-current" size={20} />
+                  </span>
+                </Show>
+              </ResourceSelector>
+            </div>
+          )}
+        </For>
+      </DialogContent>
+    </Dialog>
   );
 }

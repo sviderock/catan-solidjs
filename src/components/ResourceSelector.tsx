@@ -10,11 +10,9 @@ import {
   createSignal,
   splitProps,
   useContext,
-  type Accessor,
   type Component,
   type Context,
-  type JSX,
-  type Setter
+  type JSX
 } from "solid-js";
 
 type Props = {
@@ -22,6 +20,7 @@ type Props = {
   onChange?: (resources: PlayerResources) => void;
   requiredCount?: number;
   children?: JSX.Element;
+  disabled?: boolean;
 };
 
 type RSContextProps = ReturnType<typeof makeRSContext>;
@@ -30,6 +29,7 @@ function makeRSContext(props: Props) {
   return {
     resources: () => props.resources,
     onChange: () => props.onChange?.(selectedResources()),
+    disabled: () => props.disabled,
     allSelected: () => {
       return (
         props.requiredCount === undefined || resourceCount(selectedResources()) === props.requiredCount
@@ -77,7 +77,7 @@ export function ResourceSelectorContent() {
             <Button
               size="icon"
               variant="ghost"
-              disabled={context.subtractDisabled(res())}
+              disabled={context.subtractDisabled(res()) || context.disabled()}
               onClick={(e) => {
                 const newCount = context.selectedResources()[res()] - (e.shiftKey ? 10 : 1);
                 if (newCount < 0) return;
@@ -99,7 +99,7 @@ export function ResourceSelectorContent() {
             <Button
               size="icon"
               variant="ghost"
-              disabled={context.addDisabled()}
+              disabled={context.addDisabled() || context.disabled()}
               onClick={(e) => {
                 const newCount = context.selectedResources()[res()] + (e.shiftKey ? 10 : 1);
                 if (newCount > context.resources()[res()]) return;
@@ -120,23 +120,15 @@ type RSButtonProps = Omit<ButtonProps, "onClick"> & { onClick: (resources: Playe
 export const ResourceSelectorButton: Component<RSButtonProps> = (props) => {
   const [, rest] = splitProps(props, ["onClick", "disabled"]);
   const context = useRSContext();
-
-  createEffect(() => {
-    console.log(!context.allSelected() || props.disabled, !context.allSelected(), props.disabled);
-  });
+  const disabled = () => !context.allSelected() || context.disabled() || props.disabled;
   return (
-    <Button
-      onClick={() => props.onClick(context.selectedResources())}
-      disabled={!context.allSelected() || props.disabled}
-      {...rest}
-    />
+    <Button onClick={() => props.onClick(context.selectedResources())} disabled={disabled()} {...rest} />
   );
 };
 
 type RSErrorProps = { children: (leftToSelect: number) => JSX.Element; successFallback?: JSX.Element };
 export const ResourceSelectorError: Component<RSErrorProps> = (props) => {
   const context = useRSContext();
-
   return (
     <Show when={!context.allSelected()} fallback={props.successFallback}>
       {props.children(context.leftToSelect()!)}
