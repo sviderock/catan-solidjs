@@ -11,7 +11,7 @@ import { onMount } from "solid-js";
 import { produce } from "solid-js/store";
 import Harbors from "./Harbors";
 import Hexes from "./Hexes";
-import Robber from "./Robber";
+import Robber from "../Robber/Robber";
 import Structures from "./Structures";
 
 export default function Board() {
