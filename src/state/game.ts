@@ -6,7 +6,7 @@ import { setState, state } from "./initial_state";
 import { currentPlayer, nextPlayerIdx, playersResourceSummary } from "./player";
 import { occupied, occupiedBy } from "./structures";
 
-export const { build, trade, endTurn, isSetupPhase, lastRoll, roll } = createRoot(() => {
+export const { dropResources, build, trade, endTurn, isSetupPhase, lastRoll, roll } = createRoot(() => {
   const isSetupPhase = () => state.game.phase === "setup";
 
   const lastRoll = () => state.game.rolls?.at(-1)?.roll;
@@ -45,23 +45,37 @@ export const { build, trade, endTurn, isSetupPhase, lastRoll, roll } = createRoo
     }, 1000);
   }
 
+  function calculateResources(
+    playerIdx: number,
+    params: { add?: PlayerResources; remove?: PlayerResources }
+  ): PlayerResources {
+    const res = state.game.players[playerIdx]!.resources();
+    return {
+      brick: res.brick + (params.add?.brick || 0) - (params.remove?.brick || 0),
+      lumber: res.lumber + (params.add?.lumber || 0) - (params.remove?.lumber || 0),
+      wool: res.wool + (params.add?.wool || 0) - (params.remove?.wool || 0),
+      grain: res.grain + (params.add?.grain || 0) - (params.remove?.grain || 0),
+      ore: res.ore + (params.add?.ore || 0) - (params.remove?.ore || 0)
+    };
+  }
+
+  function dropResources(resourcesByPlayer: Array<[playerIdx: number, PlayerResources]>) {
+    batch(() => {
+      resourcesByPlayer.forEach(([playerIdx, resourcesToDrop]) => {
+        const newResources = calculateResources(playerIdx, { remove: resourcesToDrop });
+        console.log(newResources);
+        state.game.players[playerIdx]!.setResources(newResources);
+      });
+    });
+  }
+
   function trade<T extends PlayerResources>(playerIdx: number, trade: { give: T; take: T }) {
     batch(() => {
-      currentPlayer().setResources((res) => ({
-        brick: res.brick - trade.give.brick + trade.take.brick,
-        lumber: res.lumber - trade.give.lumber + trade.take.lumber,
-        wool: res.wool - trade.give.wool + trade.take.wool,
-        grain: res.grain - trade.give.grain + trade.take.grain,
-        ore: res.ore - trade.give.ore + trade.take.ore
-      }));
+      const newRes = calculateResources(currentPlayer().idx, { add: trade.take, remove: trade.give });
+      currentPlayer().setResources(newRes);
 
-      state.game.players[playerIdx]!.setResources((res) => ({
-        brick: res.brick + trade.give.brick - trade.take.brick,
-        lumber: res.lumber + trade.give.lumber - trade.take.lumber,
-        wool: res.wool + trade.give.wool - trade.take.wool,
-        grain: res.grain + trade.give.grain - trade.take.grain,
-        ore: res.ore + trade.give.ore - trade.take.ore
-      }));
+      const newOpponentRes = calculateResources(playerIdx, { add: trade.give, remove: trade.take });
+      state.game.players[playerIdx]!.setResources(newOpponentRes);
     });
   }
 
@@ -165,5 +179,5 @@ export const { build, trade, endTurn, isSetupPhase, lastRoll, roll } = createRoo
     });
   }
 
-  return { build, trade, endTurn, isSetupPhase, lastRoll, roll };
+  return { dropResources, build, trade, endTurn, isSetupPhase, lastRoll, roll };
 });

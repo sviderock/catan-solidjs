@@ -7,10 +7,11 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Icons } from "@/constants";
-import { refs, setState, state } from "@/state";
+import { dropResources, refs, setState, state } from "@/state";
 import { cn, resourceCount } from "@/utils";
 import { calculateRobber } from "@/utils/calculations";
 import { As } from "@kobalte/core";
+import { AiOutlineCheck } from "solid-icons/ai";
 import {
   For,
   Match,
@@ -18,14 +19,12 @@ import {
   Switch,
   batch,
   createEffect,
-  createMemo,
   createSignal,
   onCleanup,
   splitProps,
   type JSX
 } from "solid-js";
 import { produce } from "solid-js/store";
-import { AiOutlineCheck } from "solid-icons/ai";
 
 // https://github.com/clauderic/dnd-kit/blob/master/packages/core/src/utilities/coordinates/distanceBetweenPoints.ts#L6
 function distanceBetween(p1: Pos, p2: Pos) {
@@ -188,11 +187,20 @@ function DropResourcesDialog() {
     state.game.players.map(() => ({ allGood: false, resourcesToDrop: null as PlayerResources | null }))
   );
 
-  // createEffect(() => {
-  //   if (playerStatus().every((status) => status.allGood)) {
-  //     setState("robber", "status", "select_hex");
-  //   }
-  // });
+  function drop(playerIdx: number, res: PlayerResources) {
+    setPlayerStatus((status) => status.with(playerIdx, { allGood: true, resourcesToDrop: res }));
+
+    const allDropped = playerStatus().every((status) => status.allGood);
+    if (!allDropped) return;
+
+    batch(() => {
+      const drop: Parameters<typeof dropResources>[0] = playerStatus().map(
+        ({ resourcesToDrop }, idx) => [idx, resourcesToDrop!]
+      );
+      dropResources(drop);
+      setState("robber", "status", "select_hex");
+    });
+  }
 
   return (
     <Dialog open={state.robber.status === "drop_resources"}>
@@ -232,11 +240,7 @@ function DropResourcesDialog() {
                   fallback={
                     <ResourceSelectorButton
                       class="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={(resources) => {
-                        setPlayerStatus((status) =>
-                          status.with(idx(), { allGood: true, resourcesToDrop: resources })
-                        );
-                      }}
+                      onClick={(resources) => drop(idx(), resources)}
                     >
                       Drop Resources
                     </ResourceSelectorButton>
