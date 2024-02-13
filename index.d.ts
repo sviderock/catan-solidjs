@@ -182,7 +182,7 @@ declare global {
   type RobberPos = { x: number; y: number };
   type Robber = {
     id: "robber";
-    status: "drop_resources" | "select_hex" | "select_player" | "stealing_resource" | "placed";
+    status: "drop_resources" | "select_hex_and_player" | "stealing_resource" | "placed";
     hex: Hex;
     pos: Accessor<RobberPos>;
     setPos: Setter<RobberPos>;
@@ -196,5 +196,11 @@ declare global {
 
   type DevelopmentCard = {
     type: "knight" | "victory_point" | "monopoly" | "road_building" | "year_of_plenty";
+  };
+
+  type ResourceExchange = {
+    idx: number;
+    add?: Partial<PlayerResources>;
+    remove?: Partial<PlayerResources>;
   };
 }

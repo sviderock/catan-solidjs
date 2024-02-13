@@ -6,7 +6,6 @@ import {
   Index,
   Show,
   createContext,
-  createEffect,
   createSignal,
   splitProps,
   useContext,
@@ -130,7 +129,7 @@ type RSErrorProps = { children: (leftToSelect: number) => JSX.Element; successFa
 export const ResourceSelectorError: Component<RSErrorProps> = (props) => {
   const context = useRSContext();
   return (
-    <Show when={!context.allSelected()} fallback={props.successFallback}>
+    <Show when={!context.allSelected() && !context.disabled()} fallback={props.successFallback}>
       {props.children(context.leftToSelect()!)}
     </Show>
   );

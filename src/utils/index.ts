@@ -80,3 +80,20 @@ export function hexToRgb(color: string) {
 export function resourceCount(resources: PlayerResources) {
   return RESOURCES.reduce((acc, res) => acc + resources[res], 0);
 }
+
+// https://bost.ocks.org/mike/shuffle/
+export function shuffle<T>(array: T[]) {
+  let m = array.length;
+  let i: number;
+  let t: T;
+  // While there remain elements to shuffle…
+  while (m) {
+    i = Math.floor(Math.random() * m--); // Pick a remaining element…
+    // And swap it with the current element.
+    t = array[m]!;
+    array[m] = array[i]!;
+    array[i] = t;
+  }
+
+  return array;
+}

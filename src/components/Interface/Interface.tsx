@@ -167,7 +167,7 @@ const TurnPhase = (props: { game: TurnPhase }) => {
           <button
             type="button"
             onClick={() => endTurn()}
-            disabled={props.game.rollStatus !== "rolled"}
+            disabled={props.game.rollStatus !== "rolled" || state.robber.status !== "placed"}
             class="col-span-full rounded-lg border border-[--current-player-color] bg-[--current-player-color] px-4 py-1 text-center text-sm font-medium text-[--current-player-color-text] transition-colors hover:border-[color:--current-player-color-darker] hover:bg-[--current-player-color-darker] hover:text-white disabled:pointer-events-none disabled:bg-[--current-player-color-darker] disabled:opacity-25"
           >
             End Turn

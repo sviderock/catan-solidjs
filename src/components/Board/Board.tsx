@@ -1,5 +1,5 @@
 import Interface from "@/components/Interface/Interface";
-import { refs, setState, state } from "@/state";
+import { refs, state } from "@/state";
 import {
   calculateHarbor,
   calculateHex,
@@ -8,10 +8,9 @@ import {
   calculateTown
 } from "@/utils/calculations";
 import { onMount } from "solid-js";
-import { produce } from "solid-js/store";
+import Robber from "../Robber/Robber";
 import Harbors from "./Harbors";
 import Hexes from "./Hexes";
-import Robber from "../Robber/Robber";
 import Structures from "./Structures";
 
 export default function Board() {
@@ -51,14 +50,6 @@ export default function Board() {
 
   onMount(() => {
     recalculate();
-
-    setState(
-      produce((state) => {
-        state.game.rollStatus = "rolled";
-        state.game.rolls?.push({ a: 3, b: 4, roll: 7 });
-        state.robber.status = "drop_resources";
-      })
-    );
   });
 
   // [clip-path:_polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]

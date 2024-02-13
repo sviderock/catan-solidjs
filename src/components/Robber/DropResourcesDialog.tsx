@@ -12,7 +12,14 @@ import { For, Show, batch, createSignal } from "solid-js";
 
 export default function DropResourcesDialog() {
   const [playerStatus, setPlayerStatus] = createSignal(
-    state.game.players.map(() => ({ allGood: false, resourcesToDrop: null as PlayerResources | null }))
+    state.game.players.map((player) => {
+      console.log(resourceCount(player.resources()));
+      const needToDrop = resourceCount(player.resources()) > 7;
+      return {
+        allGood: !needToDrop,
+        resourcesToDrop: (needToDrop ? null : {}) as PlayerResources | null
+      };
+    })
   );
 
   function drop(playerIdx: number, res: PlayerResources) {
@@ -26,12 +33,12 @@ export default function DropResourcesDialog() {
         ({ resourcesToDrop }, idx) => [idx, resourcesToDrop!]
       );
       dropResources(drop);
-      setState("robber", "status", "select_hex");
+      setState("robber", "status", "select_hex_and_player");
     });
   }
 
   return (
-    <Dialog open={state.robber.status === "drop_resources"}>
+    <Dialog defaultOpen>
       <DialogContent class="grid max-w-[36rem] grid-cols-2 gap-5">
         <span class="col-span-full text-center text-[1.5rem]">Waiting for players...</span>
 

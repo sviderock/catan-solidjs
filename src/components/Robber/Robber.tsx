@@ -1,15 +1,20 @@
+import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem, RadioGroupItemLabel } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Icons } from "@/constants";
-import { refs, setState, state } from "@/state";
+import { currentPlayer, refs, setState, state } from "@/state";
 import { cn } from "@/utils";
 import { calculateRobber } from "@/utils/calculations";
 import { As } from "@kobalte/core";
+import { AiFillWarning } from "solid-icons/ai";
 import {
+  For,
   Match,
   Show,
   Switch,
   batch,
   createEffect,
+  createMemo,
   createSignal,
   onCleanup,
   splitProps,
@@ -17,6 +22,7 @@ import {
 } from "solid-js";
 import { produce } from "solid-js/store";
 import DropResourcesDialog from "./DropResourcesDialog";
+import StealResourceDialog from "./StealResourceDialog";
 
 // https://github.com/clauderic/dnd-kit/blob/master/packages/core/src/utilities/coordinates/distanceBetweenPoints.ts#L6
 function distanceBetween(p1: Pos, p2: Pos) {
@@ -46,7 +52,10 @@ function findClosest(robber: Pos & Rect, hexes: Hex[]): Hex["id"] {
 export default function Robber() {
   const [newPos, setNewPos] = createSignal({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = createSignal(false);
+  const [initialHexId] = createSignal(state.robber.hex.id);
   const [newHexId, setNewHexId] = createSignal<Hex["id"] | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = createSignal("");
+  const [selectedCard, setSelectedCard] = createSignal<Resource | "">("");
 
   createEffect(() => {
     const pos = calculateRobber(state.robber, refs);
@@ -95,7 +104,6 @@ export default function Robber() {
           "robber",
           produce((robber) => {
             robber.hex = state.hexes.byId[newHexId()!]!;
-            robber.status = "select_player";
           })
         );
       });
@@ -112,12 +120,7 @@ export default function Robber() {
     });
   });
 
-  const tooltipDisabled = () =>
-    state.robber.status === "placed" ||
-    state.robber.status === "drop_resources" ||
-    state.robber.status === "stealing_resource";
-
-  const prognosedNewPos = () => {
+  const prognosedNewPos = (): RobberPos => {
     const robberRef = refs[state.robber.id];
     return {
       x: state.hexes.byId[newHexId()!]!.calc().center.x - robberRef!.offsetWidth / 2,
@@ -125,35 +128,108 @@ export default function Robber() {
     };
   };
 
+  const robberPos = (): RobberPos => {
+    if (newHexId() === state.robber.hex.id) return state.robber.pos();
+    if (newHexId() && isDragging()) return state.robber.pos();
+    if (!newHexId() || newHexId() === state.robber.hex.id) return state.robber.pos();
+    return prognosedNewPos();
+  };
+
+  const stealFrom = createMemo(() => {
+    if (!newHexId()) return { blockingYourself: false, players: [] };
+    const townIds = state.hexes.byId[newHexId()!]!.towns.map((t) => t.id);
+    const players = state.game.players.filter((player) =>
+      player.towns().some((t) => townIds.includes(t.id))
+    );
+    return {
+      blockingYourself: !!players.find((player) => player === currentPlayer()),
+      players: players.filter((player) => player !== currentPlayer())
+    };
+  });
+
   return (
     <>
-      <Tooltip placement="right" disabled={tooltipDisabled()}>
+      <Tooltip placement="right" open={state.robber.status === "select_hex_and_player" && !isDragging()}>
         <TooltipTrigger asChild>
           <As
             component={RobberCircle}
             ref={refs[state.robber.id]}
-            pos={state.robber.pos()}
+            pos={robberPos()}
             classList={{ "opacity-50": isDragging() }}
           />
         </TooltipTrigger>
 
         <TooltipContent>
           <Switch>
-            <Match when={state.robber.status === "select_hex"}>Move me to different hex</Match>
-            <Match when={state.robber.status === "select_player"}>Who do you want to steal from?</Match>
+            <Match when={initialHexId() === state.robber.hex.id}>Move me to different hex</Match>
+            <Match when={initialHexId() !== state.robber.hex.id}>
+              <div class="flex flex-col gap-2">
+                <Show when={stealFrom().blockingYourself}>
+                  <span class="flex items-center justify-between gap-2 text-orange-500">
+                    <AiFillWarning size={16} />
+                    You're blocking yourself
+                  </span>
+                </Show>
+
+                <RadioGroup
+                  class={cn(
+                    "flex justify-between",
+                    stealFrom().players.length === 1 && "justify-center"
+                  )}
+                  value={selectedPlayer()}
+                  onChange={setSelectedPlayer}
+                >
+                  <For each={stealFrom().players}>
+                    {(player) => (
+                      <RadioGroupItem
+                        value={`${player.idx}`}
+                        class="text-[--color]"
+                        style={{ "--color": `var(--player-color-${player.idx})` }}
+                      >
+                        <RadioGroupItemLabel class="text-[color:--color]">
+                          <span>{player.name}</span>
+                        </RadioGroupItemLabel>
+                      </RadioGroupItem>
+                    )}
+                  </For>
+                </RadioGroup>
+                <Show when={selectedPlayer() || !stealFrom().players.length}>
+                  <Button
+                    variant="success"
+                    onClick={() => {
+                      setState("robber", "status", selectedPlayer() ? "stealing_resource" : "placed");
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </Show>
+              </div>
+            </Match>
           </Switch>
         </TooltipContent>
       </Tooltip>
 
       <Show when={isDragging() && newHexId() && newHexId() !== state.robber.hex.id}>
-        <RobberCircle pos={prognosedNewPos()} class="bg-blue-500 bg-opacity-80" />
+        <Tooltip placement="right" open={isDragging() && newHexId() === initialHexId()}>
+          <TooltipTrigger asChild>
+            <As component={RobberCircle} pos={prognosedNewPos()!} class="bg-blue-500 bg-opacity-80" />
+          </TooltipTrigger>
+
+          <TooltipContent>Move me to different hex</TooltipContent>
+        </Tooltip>
       </Show>
 
       <Show when={isDragging()}>
         <RobberCircle pos={newPos()} class="fixed" />
       </Show>
 
-      <DropResourcesDialog />
+      <Show when={state.robber.status === "drop_resources"}>
+        <DropResourcesDialog />
+      </Show>
+
+      <Show when={state.robber.status === "stealing_resource" && selectedPlayer()}>
+        <StealResourceDialog playerIdx={+selectedPlayer()!} />
+      </Show>
     </>
   );
 }

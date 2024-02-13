@@ -17,11 +17,11 @@ function generatePlayer(idx: number, withResources?: boolean): Player {
   const [towns, setTowns] = createSignal<Town[]>([]);
   const [roads, setRoads] = createSignal<Road[]>([]);
   const [resources, setResources] = createSignal<PlayerResources>({
-    brick: withResources ? 99 : 0,
-    grain: withResources ? 99 : 0,
-    lumber: withResources ? 99 : 0,
-    ore: withResources ? 99 : 0,
-    wool: withResources ? 99 : 0
+    brick: withResources ? 3 : 0,
+    grain: withResources ? 3 : 0,
+    lumber: withResources ? 3 : 0,
+    ore: withResources ? 3 : 0,
+    wool: withResources ? 3 : 0
   });
 
   return {

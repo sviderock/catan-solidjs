@@ -140,7 +140,7 @@ export const {
   const buildableStructureIds = createMemo(() => buildableStructures().map((s) => s.id));
 
   function canBuild(s: Structure): boolean {
-    return buildableStructureIds().includes(s.id);
+    return buildableStructureIds().includes(s.id) && state.game.rollStatus === "rolled";
   }
 
   function harbor(id: TownId) {
