@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { currentPlayer, exachange as exchange, setState, state } from "@/state";
+import { state } from "@/state";
 import { shuffle } from "@/utils";
-import { Index, batch } from "solid-js";
+import { Index } from "solid-js";
 
-export default function StealResourceDialog(props: { playerIdx: number }) {
+export default function StealResourceDialog(props: {
+  playerIdx: number;
+  onSteal: (playerIdx: number, res: Resource) => void;
+}) {
   const shuffledCards = () => {
     const res = Object.entries(state.game.players[props.playerIdx]!.resources()).reduce<Resource[]>(
       (acc, [res, count]) => {
@@ -17,16 +20,6 @@ export default function StealResourceDialog(props: { playerIdx: number }) {
     return shuffle(res);
   };
 
-  function stealCard(res: Resource) {
-    batch(() => {
-      exchange([
-        { idx: currentPlayer().idx, add: { [res]: 1 } },
-        { idx: props.playerIdx, remove: { [res]: 1 } }
-      ]);
-      setState("robber", "status", "placed");
-    });
-  }
-
   return (
     <Dialog defaultOpen>
       <DialogContent class="max-w-[36rem] gap-5">
@@ -35,7 +28,7 @@ export default function StealResourceDialog(props: { playerIdx: number }) {
           <Index each={shuffledCards()}>
             {(res) => (
               <Button
-                onClick={() => stealCard(res())}
+                onClick={() => props.onSteal(props.playerIdx, res())}
                 class="flex h-[100px] w-[100px] items-center justify-center rounded-sm border-2 border-blue-300"
               >
                 ?

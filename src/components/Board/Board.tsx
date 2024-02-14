@@ -57,9 +57,7 @@ export default function Board() {
     <div class="flex h-full w-full flex-col justify-between">
       <div
         class="flex h-full w-full flex-col items-center justify-center"
-        style={{
-          background: "radial-gradient(closest-side, #fde68a 40%, #60a5fa 60%, #2463eb 100%)"
-        }}
+        style={{ background: "radial-gradient(closest-side, #fde68a 40%, #60a5fa 60%, #2463eb 100%)" }}
       >
         <div class="relative flex flex-col flex-wrap items-center justify-center p-[5rem]">
           <Hexes />

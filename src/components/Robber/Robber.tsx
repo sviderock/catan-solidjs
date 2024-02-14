@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem, RadioGroupItemLabel } from "@/components/ui/radio-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Icons } from "@/constants";
-import { currentPlayer, refs, setState, state } from "@/state";
+import { currentPlayer, exachange, refs, setState, state } from "@/state";
 import { cn } from "@/utils";
 import { calculateRobber } from "@/utils/calculations";
 import { As } from "@kobalte/core";
@@ -52,10 +52,9 @@ function findClosest(robber: Pos & Rect, hexes: Hex[]): Hex["id"] {
 export default function Robber() {
   const [newPos, setNewPos] = createSignal({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = createSignal(false);
-  const [initialHexId] = createSignal(state.robber.hex.id);
+  const [initialHexId, setInitialHexId] = createSignal(state.robber.hex.id);
   const [newHexId, setNewHexId] = createSignal<Hex["id"] | null>(null);
   const [selectedPlayer, setSelectedPlayer] = createSignal("");
-  const [selectedCard, setSelectedCard] = createSignal<Resource | "">("");
 
   createEffect(() => {
     const pos = calculateRobber(state.robber, refs);
@@ -147,6 +146,12 @@ export default function Robber() {
     };
   });
 
+  function resetState() {
+    setInitialHexId(state.robber.hex.id);
+    setNewHexId(null);
+    setSelectedPlayer("");
+  }
+
   return (
     <>
       <Tooltip placement="right" open={state.robber.status === "select_hex_and_player" && !isDragging()}>
@@ -197,7 +202,13 @@ export default function Robber() {
                   <Button
                     variant="success"
                     onClick={() => {
-                      setState("robber", "status", selectedPlayer() ? "stealing_resource" : "placed");
+                      batch(() => {
+                        if (selectedPlayer()) {
+                          return setState("robber", "status", "stealing_resource");
+                        }
+                        setState("robber", "status", "placed");
+                        resetState();
+                      });
                     }}
                   >
                     Confirm
@@ -228,7 +239,19 @@ export default function Robber() {
       </Show>
 
       <Show when={state.robber.status === "stealing_resource" && selectedPlayer()}>
-        <StealResourceDialog playerIdx={+selectedPlayer()!} />
+        <StealResourceDialog
+          playerIdx={+selectedPlayer()!}
+          onSteal={(playerIdx, res) => {
+            batch(() => {
+              exachange([
+                { idx: currentPlayer().idx, add: { [res]: 1 } },
+                { idx: playerIdx, remove: { [res]: 1 } }
+              ]);
+              setState("robber", "status", "placed");
+              resetState();
+            });
+          }}
+        />
       </Show>
     </>
   );
