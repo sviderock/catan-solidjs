@@ -24,7 +24,7 @@ export type TradeSide = Array<[Resource, count: number]>;
 
 const initialTrade = () => ({ give: EMPTY_RESOURCES, take: EMPTY_RESOURCES });
 
-export default function Trade() {
+export default function TradeButton() {
   const [finalTrade, setFinalTrade] = createSignal(initialTrade());
   const [popoverOpen, setPopoverOpen] = createSignal(false);
   const [playerSelected, setPlayerSelected] = createSignal("");
