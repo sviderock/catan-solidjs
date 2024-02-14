@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Limit, RESOURCES, Resource } from "@/constants";
 import { currentPlayer, currentPlayerStats, endTurn, lastRoll, roll, state } from "@/state";
-import { As } from "@kobalte/core";
-import { TbShip } from "solid-icons/tb";
+import { matches } from "@/utils";
 import { Index, Match, Switch } from "solid-js";
-import { Limit, RESOURCES, Resource } from "../../constants";
-import { matches } from "../../utils";
 import BuildingCosts from "./BuildingCosts";
-import Trade from "./Trade";
+import MaritimeTradeButton from "./MaritimeTradeButton";
+import TradeButton from "./TradeButton";
 
 export default function Interface() {
   return (
@@ -136,22 +135,8 @@ const TurnPhase = (props: { game: TurnPhase }) => {
             {rollText()}
           </Button>
 
-          <Trade />
-
-          <Tooltip placement="right" disabled={!!currentPlayerStats().harbors.length}>
-            <TooltipTrigger asChild>
-              <As component="span" tabIndex={0} class="flex">
-                <Button
-                  class="gap-2 bg-blue-500 hover:bg-blue-600"
-                  disabled={!currentPlayerStats().harbors.length}
-                >
-                  Maritime Trade <TbShip size={20} />
-                </Button>
-              </As>
-            </TooltipTrigger>
-
-            <TooltipContent>You don't have any harbors</TooltipContent>
-          </Tooltip>
+          <TradeButton />
+          <MaritimeTradeButton />
 
           <Tooltip placement="right">
             <TooltipTrigger
