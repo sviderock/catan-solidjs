@@ -8,7 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { dropResources, setState, state } from "@/state";
 import { resourceCount } from "@/utils";
 import { AiOutlineCheck } from "solid-icons/ai";
-import { For, Show, batch, createSignal } from "solid-js";
+import { For, Show, batch, createSignal, onMount } from "solid-js";
 
 export default function DropResourcesDialog() {
   const [playerStatus, setPlayerStatus] = createSignal(
@@ -36,6 +36,13 @@ export default function DropResourcesDialog() {
       setState("robber", "status", "select_hex_and_player");
     });
   }
+
+  onMount(() => {
+    const allGood = playerStatus().every((status) => status.allGood);
+    if (allGood) {
+      setState("robber", "status", "select_hex_and_player");
+    }
+  });
 
   return (
     <Dialog defaultOpen>

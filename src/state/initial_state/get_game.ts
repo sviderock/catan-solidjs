@@ -81,7 +81,7 @@ function getHalfSetup(hexes: GetHexes, structures: GetStructures): SetupPhase {
 }
 
 function getStartedGame(hexes: GetHexes, structures: GetStructures): TurnPhase {
-  const players: Player[] = generatePlayers(4, true);
+  const players: Player[] = generatePlayers(4);
   const towns = structures.array.filter((s): s is Town => s.type === "town");
   const roads = structures.array.filter((s): s is Road => s.type === "road");
 
