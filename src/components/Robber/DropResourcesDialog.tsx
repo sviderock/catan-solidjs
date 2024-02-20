@@ -13,7 +13,6 @@ import { For, Show, batch, createSignal, onMount } from "solid-js";
 export default function DropResourcesDialog() {
   const [playerStatus, setPlayerStatus] = createSignal(
     state.game.players.map((player) => {
-      console.log(resourceCount(player.resources()));
       const needToDrop = resourceCount(player.resources()) > 7;
       return {
         allGood: !needToDrop,

@@ -70,12 +70,11 @@ export default function Robber() {
     const heightOffset = robberRef.offsetWidth / 2;
 
     function onMouseDown(e: MouseEvent) {
-      if (e.target === refs[state.robber.id]) {
-        batch(() => {
-          setIsDragging(true);
-          setNewPos({ x: e.x - widthOffset, y: e.y - heightOffset });
-        });
-      }
+      if (e.target !== refs[state.robber.id]) return;
+      batch(() => {
+        setIsDragging(true);
+        setNewPos({ x: e.x - widthOffset, y: e.y - heightOffset });
+      });
     }
 
     function onMouseMove(e: MouseEvent) {
@@ -96,6 +95,8 @@ export default function Robber() {
     }
 
     function onMouseUp() {
+      if (!newHexId()) return;
+
       batch(() => {
         setIsDragging(false);
         setNewPos({ x: 0, y: 0 });
@@ -109,8 +110,10 @@ export default function Robber() {
     }
 
     document.body.addEventListener("mousedown", onMouseDown);
-    document.body.addEventListener("mouseup", onMouseUp);
-    if (isDragging()) document.body.addEventListener("mousemove", onMouseMove);
+    if (isDragging()) {
+      document.body.addEventListener("mousemove", onMouseMove);
+      document.body.addEventListener("mouseup", onMouseUp);
+    }
 
     onCleanup(() => {
       document.body.removeEventListener("mousedown", onMouseDown);
