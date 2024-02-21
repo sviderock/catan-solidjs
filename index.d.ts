@@ -132,20 +132,22 @@ declare global {
   type StructureSeparateIdMap = { [key: SingleIndexedId]: { road: Road; town: Town } };
 
   type PlayerResources = Record<Resource, number>;
+  type PlayerDevelopmentCard = {
+    type: DevelopmentCard;
+    status: "ready_next_turn" | "available" | "played";
+  };
   type Player = {
     idx: number;
     name: string;
     color: string;
     resources: Accessor<PlayerResources>;
     setResources: Setter<PlayerResources>;
+    developmentCards: Accessor<PlayerDevelopmentCard[]>;
+    setDevelopmentCards: Setter<PlayerDevelopmentCard[]>;
     towns: Accessor<Town[]>;
     setTowns: Setter<Town[]>;
     roads: Accessor<Road[]>;
     setRoads: Setter<Road[]>;
-    developmentCards: Array<{
-      card: DevelopmentCard;
-      played: boolean;
-    }>;
   };
 
   type BasePhaseProps = {
@@ -194,9 +196,7 @@ declare global {
     [diceValue: number]: Array<[Hex["type"], resourceCount: number]>;
   };
 
-  type DevelopmentCard = {
-    type: "knight" | "victory_point" | "monopoly" | "road_building" | "year_of_plenty";
-  };
+  type DevelopmentCard = "knight" | "victory_point" | "monopoly" | "road_building" | "year_of_plenty";
 
   type ResourceExchange = {
     idx: number;

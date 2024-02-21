@@ -16,8 +16,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EMPTY_RESOURCES, RESOURCES } from "@/constants";
 import { currentPlayer, opponents, state, trade } from "@/state";
 import { cn } from "@/utils";
+import { As } from "@kobalte/core";
 import { FaSolidAnglesLeft, FaSolidAnglesRight, FaSolidArrowRightArrowLeft } from "solid-icons/fa";
 import { IoClose } from "solid-icons/io";
+import { TbMoneybag } from "solid-icons/tb";
 import { For, Match, Show, Switch, batch, createMemo, createSignal } from "solid-js";
 
 export type TradeSide = Array<[Resource, count: number]>;
@@ -86,8 +88,13 @@ export default function TradeButton() {
         if (!isOpen) reset();
       }}
     >
-      <PopoverTrigger as={Button} class="gap-2 bg-amber-500 hover:bg-amber-600">
-        Trade <FaSolidArrowRightArrowLeft size={20} />
+      <PopoverTrigger asChild>
+        <As component="div" class="flex flex-col items-center gap-2">
+          <Button size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
+            <TbMoneybag />
+          </Button>
+          Trade
+        </As>
       </PopoverTrigger>
 
       <PopoverContent

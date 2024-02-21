@@ -1,4 +1,4 @@
-import { splitProps, type Component } from "solid-js";
+import { splitProps, useContext, type Component } from "solid-js";
 
 import { Tooltip as TooltipPrimitive } from "@kobalte/core";
 

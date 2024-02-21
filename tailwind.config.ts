@@ -98,6 +98,20 @@ const config: Config = {
         "slide-up": {
           from: { height: "var(--kb-collapsible-content-height)" },
           to: { height: "0" }
+        },
+        "dice-roll": {
+          "0%": {
+            transform: "rotateZ(0) rotateX(0)"
+          },
+          "25%": {
+            transform: "rotateZ(120deg) rotateX(0)"
+          },
+          "50%": {
+            transform: "rotateZ(120deg) rotateX(180deg)"
+          },
+          "75%": {
+            transform: "rotateZ(0) rotateX(180deg)"
+          }
         }
       },
       animation: {
@@ -106,7 +120,8 @@ const config: Config = {
         "content-show": "content-show 0.2s ease-out",
         "content-hide": "content-hide 0.2s ease-out",
         "slide-down": "slide-down 0.2s ease-out",
-        "slide-up": "slide-up 0.2s ease-out"
+        "slide-up": "slide-up 0.2s ease-out",
+        "dice-roll": "dice-roll 1s ease-in-out infinite"
       }
     }
   },

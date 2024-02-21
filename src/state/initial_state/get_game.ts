@@ -3,19 +3,10 @@ import { createSignal } from "solid-js";
 import { type GetStructures } from "./get_structures";
 import { type GetHexes } from "./get_hexes";
 
-export default function getGame(
-  hexes: GetHexes,
-  structures: GetStructures,
-  phase?: "game" | "half"
-): SetupPhase | TurnPhase {
-  if (phase === "game") return getStartedGame(hexes, structures);
-  if (phase === "half") return getHalfSetup(hexes, structures);
-  return getSetupGame(hexes);
-}
-
 function generatePlayer(idx: number, withResources?: boolean): Player {
   const [towns, setTowns] = createSignal<Town[]>([]);
   const [roads, setRoads] = createSignal<Road[]>([]);
+  const [developmentCards, setDevelopmentCards] = createSignal<PlayerDevelopmentCard[]>([]);
   const [resources, setResources] = createSignal<PlayerResources>({
     brick: withResources ? 3 : 0,
     grain: withResources ? 3 : 0,
@@ -34,12 +25,13 @@ function generatePlayer(idx: number, withResources?: boolean): Player {
     setTowns,
     roads,
     setRoads,
-    developmentCards: []
+    developmentCards,
+    setDevelopmentCards
   };
 }
 
 function generatePlayers(count: number, withResources?: boolean) {
-  return new Array(count).fill(undefined).map((_, idx) => generatePlayer(idx, withResources));
+  return Array.from({ length: count }).map((_, idx) => generatePlayer(idx, withResources));
 }
 
 function getSetupGame(hexes: GetHexes): SetupPhase {
@@ -56,7 +48,6 @@ function getSetupGame(hexes: GetHexes): SetupPhase {
 
 function getHalfSetup(hexes: GetHexes, structures: GetStructures): SetupPhase {
   const players: Player[] = generatePlayers(4, true);
-
   const towns = structures.array.filter((s): s is Town => s.type === "town");
   const roads = structures.array.filter((s): s is Road => s.type === "road");
 
@@ -81,7 +72,7 @@ function getHalfSetup(hexes: GetHexes, structures: GetStructures): SetupPhase {
 }
 
 function getStartedGame(hexes: GetHexes, structures: GetStructures): TurnPhase {
-  const players: Player[] = generatePlayers(4);
+  const players: Player[] = generatePlayers(4, true);
   const towns = structures.array.filter((s): s is Town => s.type === "town");
   const roads = structures.array.filter((s): s is Road => s.type === "road");
 
@@ -94,13 +85,34 @@ function getStartedGame(hexes: GetHexes, structures: GetStructures): TurnPhase {
   players[3]!.setTowns([towns[47]!, towns[21]!]);
   players[3]!.setRoads([roads[62]!, roads[39]!]);
 
+  players[0]!.setDevelopmentCards(() => [
+    { type: "knight", status: "available" },
+    { type: "monopoly", status: "available" },
+    { type: "road_building", status: "available" },
+    { type: "victory_point", status: "available" },
+    { type: "year_of_plenty", status: "available" },
+    { type: "knight", status: "ready_next_turn" },
+    { type: "monopoly", status: "ready_next_turn" },
+    { type: "knight", status: "played" }
+  ]);
+
   return {
     phase: "turn",
     players,
     currentPlayer: 0,
     rolls: [],
     rollStatus: "not_rolled",
-    playedDevelopmentCard: false,
-    robber: hexes.desert.id
+    robber: hexes.desert.id,
+    playedDevelopmentCard: false
   };
+}
+
+export default function getGame(
+  hexes: GetHexes,
+  structures: GetStructures,
+  phase?: "game" | "half"
+): SetupPhase | TurnPhase {
+  if (phase === "game") return getStartedGame(hexes, structures);
+  if (phase === "half") return getHalfSetup(hexes, structures);
+  return getSetupGame(hexes);
 }

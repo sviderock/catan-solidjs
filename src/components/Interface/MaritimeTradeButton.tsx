@@ -24,6 +24,7 @@ export default function MaritimeTradeButton() {
         <PopoverTrigger>
           <TradeButton />
         </PopoverTrigger>
+
         <PopoverContent class="w-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
           <PopoverArrow />
 
@@ -95,9 +96,9 @@ export default function MaritimeTradeButton() {
 }
 
 const DisabledTradeButton = () => (
-  <Tooltip placement="right">
+  <Tooltip placement="top">
     <TooltipTrigger asChild>
-      <As component="span" tabIndex={0} class="flex">
+      <As component="span" tabIndex={0}>
         <TradeButton />
       </As>
     </TooltipTrigger>
@@ -107,9 +108,15 @@ const DisabledTradeButton = () => (
 );
 
 const TradeButton = () => (
-  <Button class="gap-2 bg-blue-500 hover:bg-blue-600" disabled={!currentPlayerStats().harbors.length}>
-    Maritime Trade <TbShip size={20} />
-  </Button>
+  <div class="flex flex-col items-center gap-2">
+    <Button size="iconButton" disabled={!currentPlayerStats().harbors.length}>
+      <TbShip />
+    </Button>
+    <p class="flex flex-col items-center">
+      <span>Maritime</span>
+      <span>Trade</span>
+    </p>
+  </div>
 );
 
 const ThreeToOnePicker = (props: { onPick: (get: Resource, give: Resource) => void }) => {

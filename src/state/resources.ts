@@ -18,7 +18,11 @@ export const { haveResourcesFor } = createRoot(() => {
     return haveResourcesForSettlement(resources) || haveResourcesForCity(resources);
   }
 
-  function haveResourcesFor(type: Structure["type"] | TownLevel): boolean {
+  function haveResourcesFormDC(resources: PlayerResources): boolean {
+    return resources.wool >= 1 && resources.grain >= 1 && resources.ore >= 1;
+  }
+
+  function haveResourcesFor(type: Structure["type"] | TownLevel | "development_card"): boolean {
     switch (type) {
       case "road":
         return haveResourcesForRoad(currentPlayer().resources());
@@ -31,6 +35,9 @@ export const { haveResourcesFor } = createRoot(() => {
 
       case "town":
         return haveResourcesForTown(currentPlayer().resources());
+
+      case "development_card":
+        return haveResourcesFormDC(currentPlayer().resources());
     }
   }
 

@@ -1,22 +1,36 @@
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Limit, RESOURCES, Resource } from "@/constants";
-import { currentPlayer, currentPlayerStats, endTurn, lastRoll, roll, state } from "@/state";
+import {
+  buyDevelopmentCard,
+  currentPlayer,
+  currentPlayerStats,
+  endTurn,
+  haveResourcesFor,
+  lastRoll,
+  roll,
+  state
+} from "@/state";
 import { matches } from "@/utils";
-import { Index, Match, Switch } from "solid-js";
-import BuildingCosts from "./BuildingCosts";
+import { As } from "@kobalte/core";
+import { CgCardClubs } from "solid-icons/cg";
+import { FaSolidCircleCheck } from "solid-icons/fa";
+import { IoDice } from "solid-icons/io";
+import { Index, type JSX, Match, Switch, onCleanup, onMount } from "solid-js";
+import { Dynamic } from "solid-js/web";
+import DevelopmentCards from "./DevelopmentCards";
 import MaritimeTradeButton from "./MaritimeTradeButton";
 import TradeButton from "./TradeButton";
 
 export default function Interface() {
   return (
-    <div>
+    <div class="h-[270px] bg-dark">
       <Switch>
         <Match when={matches(state.game, (game): game is SetupPhase => game.phase === "setup")}>
           {(game) => <SetupPhase game={game()} />}
         </Match>
         <Match when={matches(state.game, (game): game is TurnPhase => game.phase === "turn")}>
-          {(game) => <TurnPhase game={game()} />}
+          <TurnPhase />
         </Match>
       </Switch>
     </div>
@@ -32,10 +46,10 @@ const CurrentPlayer = () => {
   );
 };
 
-const SetupPhase = (props: { game: SetupPhase }) => {
+function SetupPhase(props: { game: SetupPhase }) {
   return (
-    <div class="flex justify-between bg-dark">
-      <div class="flex flex-col gap-4 rounded-tl-lg bg-dark p-4 text-[1rem] text-blue-100">
+    <div class="flex h-full justify-between">
+      <div class="flex flex-col gap-4 rounded-tl-lg  p-4 text-[1rem] text-blue-100">
         <div class="flex flex-col gap-2">
           <CurrentPlayer />
 
@@ -48,37 +62,34 @@ const SetupPhase = (props: { game: SetupPhase }) => {
             </span>
           </div>
 
-          <button
-            type="button"
+          <Button
             disabled={!props.game.town || !props.game.road}
             onClick={() => endTurn()}
-            class="w-full rounded-lg border border-[--current-player-color] bg-[--current-player-color] px-4 py-1 text-center text-sm font-medium text-blue-100 transition-colors hover:border-[color:--current-player-color-darker] hover:bg-[--current-player-color-darker] hover:text-white disabled:pointer-events-none disabled:bg-[--current-player-color-darker] disabled:opacity-25"
+            color={currentPlayer().color}
           >
             End Turn
-          </button>
+          </Button>
         </div>
       </div>
     </div>
   );
-};
+}
 
-const TurnPhase = (props: { game: TurnPhase }) => {
-  const rollText = () => {
-    if (props.game.rollStatus === "not_rolled") return "Click to roll";
-    if (props.game.rollStatus === "rolling") return "Rolling production...";
-    return (
-      <div class="flex items-center justify-between">
-        <span>
-          Rolled <strong>{lastRoll()}</strong>!
-        </span>
-      </div>
-    );
-  };
+function TurnPhase() {
+  onMount(() => {
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.code === "Space") endTurn();
+      if (e.key === "r") roll();
+    }
+
+    document.addEventListener("keyup", onKeyUp);
+    onCleanup(() => document.removeEventListener("keyup", onKeyUp));
+  });
 
   return (
-    <div class="flex bg-dark p-4 text-[1rem] text-blue-100">
-      <div class="flex w-full justify-between gap-2">
-        <div class="flex flex-col justify-between gap-2">
+    <div class="flex h-full p-4 text-[1rem] text-blue-100">
+      <div class="grid w-full grid-cols-3 justify-between gap-8">
+        <div class="flex flex-col justify-between gap-2 justify-self-start">
           <div>
             <CurrentPlayer />
 
@@ -124,43 +135,80 @@ const TurnPhase = (props: { game: TurnPhase }) => {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-4">
           <h3>Actions</h3>
 
-          <Button
-            class="col-span-full bg-green-500 hover:bg-green-600"
-            disabled={props.game.rollStatus === "rolled"}
-            onClick={() => roll()}
-          >
-            {rollText()}
-          </Button>
-
-          <TradeButton />
-          <MaritimeTradeButton />
-
-          <Tooltip placement="right">
-            <TooltipTrigger
-              class="col-span-full rounded-lg border px-4 py-1 disabled:opacity-50"
-              disabled={!currentPlayer().developmentCards.length}
-            >
-              Play Development Card
-            </TooltipTrigger>
-
-            <TooltipContent>No development cards available</TooltipContent>
-          </Tooltip>
-
-          <button
-            type="button"
-            onClick={() => endTurn()}
-            disabled={props.game.rollStatus !== "rolled" || state.robber.status !== "placed"}
-            class="col-span-full rounded-lg border border-[--current-player-color] bg-[--current-player-color] px-4 py-1 text-center text-sm font-medium text-[--current-player-color-text] transition-colors hover:border-[color:--current-player-color-darker] hover:bg-[--current-player-color-darker] hover:text-white disabled:pointer-events-none disabled:bg-[--current-player-color-darker] disabled:opacity-25"
-          >
-            End Turn
-          </button>
+          <div class="flex gap-4 text-xs">
+            <RollButton />
+            <BuyDevelopmentCardButton />
+            <TradeButton />
+            <MaritimeTradeButton />
+            <EndTurnButton />
+          </div>
         </div>
 
-        <BuildingCosts />
+        <DevelopmentCards />
       </div>
     </div>
   );
+}
+
+const RollLabel: Record<RollStatus, () => JSX.Element> = {
+  not_rolled: () => "Roll",
+  rolling: () => "Rolling...",
+  rolled: () => (
+    <>
+      <p>You rolled</p>
+      <strong class="text-2xl">{lastRoll()}</strong>
+    </>
+  )
 };
+
+function RollButton() {
+  return (
+    <div class="flex flex-col items-center gap-2">
+      <Button size="iconButton" disabled={state.game.rollStatus === "rolled"} onClick={() => roll()}>
+        <IoDice classList={{ "animate-dice-roll": state.game.rollStatus === "rolling" }} />
+      </Button>
+      <Dynamic component={RollLabel[state.game.rollStatus!]} />
+    </div>
+  );
+}
+
+function BuyDevelopmentCardButton() {
+  return (
+    <Tooltip placement="top" disabled={haveResourcesFor("development_card")}>
+      <div class="flex flex-col items-center gap-2">
+        <TooltipTrigger asChild>
+          <As component="span" class="rounded-full" tabIndex={0}>
+            <Button
+              size="iconButton"
+              disabled={!haveResourcesFor("development_card") || state.game.rollStatus !== "rolled"}
+              onClick={() => buyDevelopmentCard()}
+            >
+              <CgCardClubs />
+            </Button>
+          </As>
+        </TooltipTrigger>
+        Buy DC
+      </div>
+
+      <TooltipContent>Not enough resources</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function EndTurnButton() {
+  return (
+    <div class="flex flex-col items-center gap-2">
+      <Button
+        size="iconButton"
+        onClick={() => endTurn()}
+        disabled={state.game.rollStatus !== "rolled" || state.robber.status !== "placed"}
+      >
+        <FaSolidCircleCheck />
+      </Button>
+      End turn
+    </div>
+  );
+}

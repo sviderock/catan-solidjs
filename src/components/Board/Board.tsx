@@ -54,10 +54,10 @@ export default function Board() {
 
   // [clip-path:_polygon(25%_0%,75%_0%,100%_50%,75%_100%,25%_100%,0%_50%)]
   return (
-    <div class="flex h-full w-full flex-col justify-between">
+    <div class="grid h-full max-h-full w-full grid-cols-1 grid-rows-[1fr_auto] flex-col justify-between gap-8">
       <div
         class="flex h-full w-full flex-col items-center justify-center"
-        style={{ background: "radial-gradient(closest-side, #fde68a 40%, #60a5fa 60%, #2463eb 100%)" }}
+        style={{ background: "radial-gradient(closest-side, #60a5fa 60%, #2463eb 100%)" }}
       >
         <div class="relative flex flex-col flex-wrap items-center justify-center p-[5rem]">
           <Hexes />

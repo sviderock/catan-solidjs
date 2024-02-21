@@ -4,7 +4,7 @@ import { splitProps } from "solid-js";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 
-import { cn } from "@/utils";
+import { cn, shadeHexColor } from "@/utils";
 
 const buttonVariants = cva(
   "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-30 disabled:select-none",
@@ -24,7 +24,7 @@ const buttonVariants = cva(
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "",
-        iconButton: "h-10 w-10"
+        iconButton: "h-10 w-10 *:text-[24px] rounded-full"
       }
     },
     defaultVariants: {
@@ -37,10 +37,20 @@ const buttonVariants = cva(
 export interface ButtonProps extends ComponentProps<"button">, VariantProps<typeof buttonVariants> {}
 
 const Button: Component<ButtonProps> = (props) => {
-  const [, rest] = splitProps(props, ["variant", "size", "class"]);
+  const [, rest] = splitProps(props, ["variant", "size", "class", "color", "style"]);
   return (
     <button
-      class={cn(buttonVariants({ variant: props.variant, size: props.size }), props.class)}
+      class={cn(
+        buttonVariants({ variant: props.variant, size: props.size }),
+        props.color && "bg-[--color] text-[--color-text] hover:bg-[--color-darker]",
+        props.class
+      )}
+      style={{
+        "--color": props.color ?? undefined,
+        "--color-darker": props.color ? shadeHexColor(props.color, -0.25) : undefined,
+        "--color-text": props.color ? "#373F51" : undefined,
+        ...(typeof props.style === "string" ? {} : props.style)
+      }}
       {...rest}
     />
   );
