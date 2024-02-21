@@ -14,9 +14,9 @@ import {
 import { matches } from "@/utils";
 import { As } from "@kobalte/core";
 import { CgCardClubs } from "solid-icons/cg";
-import { FaSolidCircleCheck } from "solid-icons/fa";
+import { FaRegularCircleCheck } from "solid-icons/fa";
 import { IoDice } from "solid-icons/io";
-import { Index, type JSX, Match, Switch, onCleanup, onMount } from "solid-js";
+import { Index, Match, Switch, onCleanup, onMount, type JSX } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import DevelopmentCards from "./DevelopmentCards";
 import MaritimeTradeButton from "./MaritimeTradeButton";
@@ -206,7 +206,7 @@ function EndTurnButton() {
         onClick={() => endTurn()}
         disabled={state.game.rollStatus !== "rolled" || state.robber.status !== "placed"}
       >
-        <FaSolidCircleCheck />
+        <FaRegularCircleCheck />
       </Button>
       End turn
     </div>

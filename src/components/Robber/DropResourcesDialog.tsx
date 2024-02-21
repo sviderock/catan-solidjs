@@ -45,7 +45,11 @@ export default function DropResourcesDialog() {
 
   return (
     <Dialog defaultOpen>
-      <DialogContent class="grid max-w-[36rem] grid-cols-2 gap-5">
+      <DialogContent
+        class="grid max-w-[36rem] grid-cols-2 gap-5"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <span class="col-span-full text-center text-[1.5rem]">Waiting for players...</span>
 
         <For each={state.game.players}>
