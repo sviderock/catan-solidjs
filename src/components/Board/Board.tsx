@@ -1,4 +1,5 @@
-import Interface from "@/components/Interface/Interface";
+import SetupPhase from "@/components/Interface/SetupPhase";
+import TurnPhase from "@/components/Interface/TurnPhase/TurnPhase";
 import { refs, state } from "@/state";
 import {
   calculateHarbor,
@@ -7,11 +8,17 @@ import {
   calculateRobber,
   calculateTown
 } from "@/utils/calculations";
-import { onMount } from "solid-js";
+import { onMount, type JSX } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import Robber from "../Robber/Robber";
 import Harbors from "./Harbors";
 import Hexes from "./Hexes";
 import Structures from "./Structures";
+
+const Interface: Record<typeof state.game.phase, () => JSX.Element> = {
+  setup: () => <SetupPhase game={state.game as SetupPhase} />,
+  turn: () => <TurnPhase />
+};
 
 export default function Board() {
   function recalculate() {
@@ -67,7 +74,9 @@ export default function Board() {
         </div>
       </div>
 
-      <Interface />
+      <div class="h-[270px] bg-dark">
+        <Dynamic component={Interface[state.game.phase]} />
+      </div>
     </div>
   );
 }
