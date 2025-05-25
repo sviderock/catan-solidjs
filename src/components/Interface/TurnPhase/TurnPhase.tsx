@@ -18,16 +18,16 @@ export default function TurnPhase() {
 
   return (
     <div class="flex h-full p-4 text-[1rem] text-blue-100">
-      <div class="grid w-full grid-cols-3 justify-between gap-8">
+      <div class="flex w-full justify-between gap-8">
         <div class="flex flex-col justify-between gap-2 justify-self-start">
-          <div>
+          <div class="flex flex-col gap-4">
             <CurrentPlayerTitle />
 
             <div class="flex items-center justify-between text-[1.5rem]">
               <Index each={RESOURCES}>
                 {(res) => (
                   <div class="flex flex-col">
-                    <span>{Resource[res()].icon}</span>
+                    <span class="leading-none">{Resource[res()].icon}</span>
                     <span>{currentPlayer().resources()[res()]}</span>
                   </div>
                 )}
@@ -57,11 +57,18 @@ export default function TurnPhase() {
             </div>
           </div>
 
-          <div class="flex items-center justify-between leading-none">
-            <span class="text-[2.5rem]">Points:</span>
-            <strong class="flex h-[40px] w-[40px] items-center justify-center rounded-full border-2 border-white bg-[--current-player-color] text-[2rem] leading-none">
+          <div class="flex items-center gap-2 leading-none">
+            <span class="text-2xl">Points:</span>
+            <strong class="flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-[--current-player-color-darker] bg-[--current-player-color] text-xl leading-none text-[--current-player-color-text]">
               {currentPlayerStats().points}
             </strong>
+            <span>
+              (+
+              {
+                currentPlayer().developmentCards.filter((card) => card.type === "victory_point").length
+              }{" "}
+              from DC)
+            </span>
           </div>
         </div>
 

@@ -1,112 +1,194 @@
-import { Button, type ButtonProps } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { buyDevelopmentCard, currentPlayer, haveResourcesFor } from "@/state";
-import { cn } from "@/utils";
+import DevelopmentCard from "@/components/Interface/DevelopmentCard";
+import ResourcePicker, { type ResourcePickerProps } from "@/components/ResourcePicker";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RESOURCES } from "@/constants";
+import { currentPlayer, exachange, opponents, playDevelopmentCard, setState, state } from "@/state";
+import { resourceCount } from "@/utils";
 import { As } from "@kobalte/core";
-import { FaRegularChessKnight, FaRegularMap } from "solid-icons/fa";
-import { ImCoinDollar, ImRoad } from "solid-icons/im";
-import { SiOneplus } from "solid-icons/si";
-import { TbCarCrane } from "solid-icons/tb";
-import { For, createMemo, splitProps, type JSX } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { FaRegularCircleCheck } from "solid-icons/fa";
+import { Show, batch, createMemo, createSignal } from "solid-js";
 
 export default function DevelopmentCards() {
-  const cards = createMemo(() =>
-    //@ts-ignore because for some reason Object.groupBy is not yet recognized by esnext
-    Object.groupBy(currentPlayer().developmentCards(), (item) => item.status)
-  );
+  const cardStatusCount = createMemo(() => {
+    return currentPlayer()
+      .developmentCards.filter((card): card is PlayableDevelopmentCard => card.type !== "victory_point")
+      .reduce(
+        (acc, card) => {
+          acc[card.type][card.status]++;
+          return acc;
+        },
+        {
+          knight: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
+          monopoly: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
+          year_of_plenty: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
+          road_building: { deck: 0, available: 0, ready_next_turn: 0, played: 0 }
+        } as { [K in PlayableDevelopmentCard["type"]]: Record<DevelopmentCardStatus, number> }
+      );
+  });
 
   return (
     <div class="flex h-full flex-col gap-4 justify-self-end">
-      <h3>Development cards</h3>
-
-      <div class="grid max-h-[196px] auto-rows-[60px] grid-cols-2 gap-2 overflow-auto">
-        <For each={currentPlayer().developmentCards()}>{(card) => <DevelopmentCard card={card} />}</For>
+      <div class="flex gap-2">
+        <h3>Development card:</h3>
+        <Show when={state.game.playedDevelopmentCard} fallback={<div>Not played</div>}>
+          <div class="flex items-center gap-1 text-green-500">
+            Played <FaRegularCircleCheck />
+          </div>
+        </Show>
+      </div>
+      <div class="flex gap-2">
+        <Knight count={cardStatusCount().knight} available={cardStatusCount().knight.available} />
+        <Monopoly count={cardStatusCount().monopoly} available={cardStatusCount().monopoly.available} />
+        <RoadBuilding
+          count={cardStatusCount().road_building}
+          available={cardStatusCount().road_building.available}
+        />
+        <YearOfPlenty
+          count={cardStatusCount().year_of_plenty}
+          available={cardStatusCount().year_of_plenty.available}
+        />
       </div>
     </div>
   );
 }
 
-const DevelopmentCardTypes: Record<
-  DevelopmentCard,
-  { label: string; description: () => JSX.Element; icon: () => JSX.Element }
-> = {
-  knight: {
-    label: "Knight",
-    icon: () => <FaRegularChessKnight class="text-3xl" />,
-    description: () => (
-      <>
-        <p>Move the robber.</p>
-        <p>
-          Steal <strong>1</strong> resource from the owner of a settlement or city adjacent to the
-          robber's nex hex.
-        </p>
-      </>
-    )
-  },
-  victory_point: {
-    label: "Victory Point",
-    icon: () => <SiOneplus class="text-3xl" />,
-    description: () => (
-      <p>
-        Reveal this card on your turn if, with it, you reach the number of points required for victory.
-      </p>
-    )
-  },
-  monopoly: {
-    label: "Monopoly",
-    icon: () => <FaRegularMap class="text-3xl" />,
-    description: () => (
-      <p>
-        When you play this card, announce <strong>1 type</strong> of resource. All other players must
-        give you <strong>all</strong> of their resources of that type.
-      </p>
-    )
-  },
-  year_of_plenty: {
-    label: "Year Of Plenty",
-    icon: () => <TbCarCrane class="text-3xl" />,
-    description: () => (
-      <p>
-        Take any <strong>2</strong> resources from the bank. Add them to your hand. They can be 2 of the
-        same resource or 2 different resources.
-      </p>
-    )
-  },
-  road_building: {
-    label: "Road Building",
-    icon: () => <ImRoad class="text-3xl" />,
-    description: () => (
-      <p>
-        Place <strong>2</strong> new roads as if you had just built them.
-      </p>
-    )
+function Knight(props: { count: Record<DevelopmentCardStatus, number>; available: number }) {
+  function playKnight() {
+    batch(() => {
+      playDevelopmentCard("knight");
+      setState("robber", "status", "select_hex_and_player");
+    });
   }
-};
 
-function DevelopmentCard(props: { card: PlayerDevelopmentCard } & ButtonProps) {
-  const [, rest] = splitProps(props, ["card", "class"]);
   return (
-    <Tooltip placement="top-end">
-      <TooltipTrigger asChild>
-        <As
-          component={Button}
-          class={cn("flex h-full items-center justify-center gap-2 border border-white", props.class)}
-          {...rest}
-        >
-          <Dynamic component={DevelopmentCardTypes[props.card.type].icon} />
-          {DevelopmentCardTypes[props.card.type].label}
-        </As>
-      </TooltipTrigger>
+    <DevelopmentCard
+      cardType="knight"
+      statusCount={props.count}
+      disabled={!props.available || !!state.game.playedDevelopmentCard}
+      onClick={playKnight}
+    />
+  );
+}
 
-      <TooltipContent
-        class="max-w-64 text-sm"
-        onMouseOver={(e) => {
-          console.log(e);
-        }}
-      >
-        <Dynamic component={DevelopmentCardTypes[props.card.type].description} />
-      </TooltipContent>
-    </Tooltip>
+function Monopoly(props: { count: Record<DevelopmentCardStatus, number>; available: number }) {
+  const [open, setOpen] = createSignal(false);
+  const [selected, setSelected] = createSignal<Resource | null>(null);
+
+  function playMonopoly() {
+    if (!selected()) return;
+
+    const type = selected()!;
+    batch(() => {
+      playDevelopmentCard("monopoly");
+      let res = 0;
+      opponents().forEach((player) => {
+        res += player.resources()[type];
+        player.setResources((res) => ({ ...res, [type]: 0 }));
+      });
+      exachange([{ idx: currentPlayer().idx, add: { [type]: res } }]);
+      setSelected(null);
+      setOpen(false);
+    });
+  }
+
+  return (
+    <Popover open={open()} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <As
+          component={DevelopmentCard}
+          cardType="monopoly"
+          statusCount={props.count}
+          disabled={!props.available || !!state.game.playedDevelopmentCard}
+        />
+      </PopoverTrigger>
+
+      <PopoverContent class="flex flex-col gap-2">
+        <PopoverArrow />
+        <span>Select resource to take from other players:</span>
+        <div class="flex items-center gap-2">
+          <ResourcePicker selected={selected()} onPick={setSelected} />
+          <Button variant="success" onClick={playMonopoly} disabled={!selected()}>
+            Confirm
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function RoadBuilding(props: { count: Record<DevelopmentCardStatus, number>; available: number }) {
+  function playRoadBuilding() {
+    batch(() => {
+      playDevelopmentCard("road_building");
+      //TODO
+    });
+  }
+
+  return (
+    <DevelopmentCard
+      cardType="road_building"
+      statusCount={props.count}
+      disabled={!props.available || !!state.game.playedDevelopmentCard}
+      onClick={playRoadBuilding}
+    />
+  );
+}
+
+function YearOfPlenty(props: { count: Record<DevelopmentCardStatus, number>; available: number }) {
+  const [open, setOpen] = createSignal(false);
+  const [selected, setSelected] = createSignal<Partial<PlayerResources>>({});
+  const allSelected = createMemo(() => resourceCount(selected()) === 2);
+  const disabled = createMemo(() =>
+    RESOURCES.reduce<NonNullable<ResourcePickerProps["disabled"]>>((acc, res) => {
+      acc[res] = allSelected() && !selected()[res];
+      return acc;
+    }, {})
+  );
+
+  function playYearOfPlenty() {
+    if (!allSelected()) return;
+
+    batch(() => {
+      playDevelopmentCard("year_of_plenty");
+      exachange([{ idx: currentPlayer().idx, add: selected() }]);
+      setSelected({});
+      setOpen(false);
+    });
+  }
+
+  return (
+    <Popover open={open()} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <As
+          component={DevelopmentCard}
+          cardType="year_of_plenty"
+          statusCount={props.count}
+          disabled={!props.available || !!state.game.playedDevelopmentCard}
+        />
+      </PopoverTrigger>
+
+      <PopoverContent>
+        <PopoverArrow />
+        <span>Take 2 resources from the bank:</span>
+        <div class="flex items-center gap-2">
+          <ResourcePicker
+            multiple
+            selected={selected()}
+            disabled={disabled()}
+            onPick={(res) => {
+              setSelected((val) => {
+                const allCount = resourceCount(val);
+                const newCount = (val[res] || 0) + 1;
+                return { ...val, [res]: newCount === 3 || allCount + 1 === 3 ? undefined : newCount };
+              });
+            }}
+          />
+          <Button variant="success" onClick={playYearOfPlenty} disabled={!allSelected()}>
+            Confirm
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

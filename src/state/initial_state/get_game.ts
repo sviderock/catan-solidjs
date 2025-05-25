@@ -2,11 +2,12 @@ import { PlayerColours } from "@/constants";
 import { createSignal } from "solid-js";
 import { type GetStructures } from "./get_structures";
 import { type GetHexes } from "./get_hexes";
+import { createStore, produce } from "solid-js/store";
 
 function generatePlayer(idx: number, withResources?: boolean): Player {
   const [towns, setTowns] = createSignal<Town[]>([]);
   const [roads, setRoads] = createSignal<Road[]>([]);
-  const [developmentCards, setDevelopmentCards] = createSignal<PlayerDevelopmentCard[]>([]);
+  const [developmentCards, setDevelopmentCards] = createStore<DevelopmentCard[]>([]);
   const [resources, setResources] = createSignal<PlayerResources>({
     brick: withResources ? 3 : 0,
     grain: withResources ? 3 : 0,
@@ -85,16 +86,20 @@ function getStartedGame(hexes: GetHexes, structures: GetStructures): TurnPhase {
   players[3]!.setTowns([towns[47]!, towns[21]!]);
   players[3]!.setRoads([roads[62]!, roads[39]!]);
 
-  players[0]!.setDevelopmentCards(() => [
-    { type: "knight", status: "available" },
-    { type: "monopoly", status: "available" },
-    { type: "road_building", status: "available" },
-    { type: "victory_point", status: "available" },
-    { type: "year_of_plenty", status: "available" },
-    { type: "knight", status: "ready_next_turn" },
-    { type: "monopoly", status: "ready_next_turn" },
-    { type: "knight", status: "played" }
-  ]);
+  players[0]!.setDevelopmentCards(
+    produce((cards) => {
+      cards.push(
+        { type: "knight", status: "available" },
+        { type: "monopoly", status: "available" },
+        { type: "road_building", status: "available" },
+        { type: "victory_point", status: "available" },
+        { type: "year_of_plenty", status: "available" },
+        { type: "knight", status: "ready_next_turn" },
+        { type: "monopoly", status: "ready_next_turn" },
+        { type: "knight", status: "played" }
+      );
+    })
+  );
 
   return {
     phase: "turn",

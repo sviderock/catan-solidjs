@@ -77,8 +77,8 @@ export function hexToRgb(color: string) {
   return `rgb(${parseInt(r, 16)} ${parseInt(g, 16)} ${parseInt(b, 16)} / var(--tw-bg-opacity))`;
 }
 
-export function resourceCount(resources: PlayerResources) {
-  return RESOURCES.reduce((acc, res) => acc + resources[res], 0);
+export function resourceCount(resources: Partial<PlayerResources>) {
+  return RESOURCES.reduce((acc, res) => acc + (resources[res] || 0), 0);
 }
 
 // https://bost.ocks.org/mike/shuffle/

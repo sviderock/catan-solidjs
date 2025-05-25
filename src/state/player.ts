@@ -27,9 +27,9 @@ export const {
       const roads = player.roads().length;
       const settlements = player.towns().filter((town) => town.level() === "settlement").length;
       const cities = player.towns().filter((town) => town.level() === "city").length;
-      const victoryPointsFromDC = player
-        .developmentCards()
-        .filter((card) => card.type === "victory_point").length;
+      const victoryPointsFromDC = player.developmentCards.filter(
+        (card) => card.type === "victory_point"
+      ).length;
       const points = victoryPointsFromDC + settlements + cities * 2;
       const harbors = player.towns().reduce<Harbor[]>((acc, town) => {
         const harbor = state.harbors.townToHarbor[town.id];

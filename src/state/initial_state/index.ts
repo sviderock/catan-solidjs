@@ -1,10 +1,10 @@
+import { shuffle } from "@/utils";
 import { createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import getGame from "./get_game";
 import getHarbors from "./get_harbors";
 import getHexes, { type GetHexes } from "./get_hexes";
 import getStructures from "./get_structures";
-import { shuffle } from "@/utils";
 
 declare global {
   type State = ReturnType<typeof getInitialState>;
@@ -17,11 +17,11 @@ function getRobber(hexes: GetHexes): Robber {
 
 function getDevelopmentCards(): DevelopmentCard[] {
   return shuffle([
-    ...Array<DevelopmentCard>(14).fill("knight"),
-    ...Array<DevelopmentCard>(5).fill("victory_point"),
-    ...Array<DevelopmentCard>(2).fill("monopoly"),
-    ...Array<DevelopmentCard>(2).fill("road_building"),
-    ...Array<DevelopmentCard>(2).fill("year_of_plenty")
+    ...Array<DevelopmentCard>(14).fill({ type: "knight", status: "deck" }),
+    ...Array<DevelopmentCard>(5).fill({ type: "victory_point", status: "deck" }),
+    ...Array<DevelopmentCard>(2).fill({ type: "monopoly", status: "deck" }),
+    ...Array<DevelopmentCard>(2).fill({ type: "road_building", status: "deck" }),
+    ...Array<DevelopmentCard>(2).fill({ type: "year_of_plenty", status: "deck" })
   ] as DevelopmentCard[]);
 }
 

@@ -1,5 +1,6 @@
 type Board = Pick<Hex, "type" | "value">[][];
 
+
 export const Boards: Record<"A" | "B", { board: Board; harbors: BoardHarbor[] }> = {
   A: {
     board: [

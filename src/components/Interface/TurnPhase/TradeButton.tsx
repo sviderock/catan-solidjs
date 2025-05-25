@@ -88,14 +88,14 @@ export default function TradeButton() {
         if (!isOpen) reset();
       }}
     >
-      <PopoverTrigger asChild>
-        <As component="div" class="flex flex-col items-center gap-2">
-          <Button size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
+      <div class="flex flex-col items-center gap-2">
+        <PopoverTrigger asChild>
+          <As component={Button} size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
             <TbMoneybag />
-          </Button>
-          Trade
-        </As>
-      </PopoverTrigger>
+          </As>
+        </PopoverTrigger>
+        Trade
+      </div>
 
       <PopoverContent
         class="flex w-[350px] flex-col gap-3"

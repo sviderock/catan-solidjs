@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@kobalte/core": "^0.12.1",
+    "caniuse-lite": "^1.0.30001686",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "solid-icons": "^1.1.0",

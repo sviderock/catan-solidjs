@@ -16,7 +16,8 @@ export const {
   endTurn,
   isSetupPhase,
   lastRoll,
-  roll
+  roll,
+  playDevelopmentCard
 } = createRoot(() => {
   const isSetupPhase = () => state.game.phase === "setup";
 
@@ -173,8 +174,24 @@ export const {
       }));
       currentPlayer().setDevelopmentCards((cards) => [
         ...cards,
-        { type: card!, status: "ready_next_turn" }
+        { type: card!.type, status: card!.type === "victory_point" ? "played" : "ready_next_turn" }
       ]);
+    });
+  }
+
+  function playDevelopmentCard(type: PlayableDevelopmentCard["type"]) {
+    batch(() => {
+      currentPlayer().setDevelopmentCards(
+        produce((cards) => {
+          const card = cards.find((c) => c.type === type && c.status === "available");
+          if (card) card.status = "played";
+        })
+      );
+      setState(
+        produce((state) => {
+          state.game.playedDevelopmentCard = type;
+        })
+      );
     });
   }
 
@@ -241,6 +258,7 @@ export const {
     endTurn,
     isSetupPhase,
     lastRoll,
-    roll
+    roll,
+    playDevelopmentCard
   };
 });

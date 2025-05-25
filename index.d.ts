@@ -1,4 +1,5 @@
 import { type Accessor, type Setter } from "solid-js";
+import { SetStoreFunction, Store, StoreSetter } from "solid-js/store";
 
 declare global {
   type Id = `${number}.${number}`;
@@ -132,18 +133,14 @@ declare global {
   type StructureSeparateIdMap = { [key: SingleIndexedId]: { road: Road; town: Town } };
 
   type PlayerResources = Record<Resource, number>;
-  type PlayerDevelopmentCard = {
-    type: DevelopmentCard;
-    status: "ready_next_turn" | "available" | "played";
-  };
   type Player = {
     idx: number;
     name: string;
     color: string;
     resources: Accessor<PlayerResources>;
     setResources: Setter<PlayerResources>;
-    developmentCards: Accessor<PlayerDevelopmentCard[]>;
-    setDevelopmentCards: Setter<PlayerDevelopmentCard[]>;
+    developmentCards: Store<DevelopmentCard[]>;
+    setDevelopmentCards: SetStoreFunction<DevelopmentCard[]>;
     towns: Accessor<Town[]>;
     setTowns: Setter<Town[]>;
     roads: Accessor<Road[]>;
@@ -171,7 +168,7 @@ declare global {
     phase: "turn";
     rolls: Roll[];
     rollStatus: RollStatus;
-    playedDevelopmentCard: boolean;
+    playedDevelopmentCard: PlayableDevelopmentCard["type"] | false;
 
     order?: never;
     town?: never;
@@ -196,7 +193,14 @@ declare global {
     [diceValue: number]: Array<[Hex["type"], resourceCount: number]>;
   };
 
-  type DevelopmentCard = "knight" | "victory_point" | "monopoly" | "road_building" | "year_of_plenty";
+  type DevelopmentCard = PlayableDevelopmentCard | VictoryPointCard;
+  type DevelopmentCardStatus = "deck" | "ready_next_turn" | "available" | "played";
+  type VictoryPointCard = { type: "victory_point"; status: DevelopmentCardStatus };
+  type PlayableDevelopmentCard =
+    | { type: "knight"; status: DevelopmentCardStatus }
+    | { type: "monopoly"; status: DevelopmentCardStatus }
+    | { type: "road_building"; status: DevelopmentCardStatus }
+    | { type: "year_of_plenty"; status: DevelopmentCardStatus };
 
   type ResourceExchange = {
     idx: number;

@@ -1,13 +1,13 @@
-import { HarborIcon } from "@/components/Board/Harbors";
+import ResourceIcon from "@/components/ResourceIcon";
+import ResourcePicker from "@/components/ResourcePicker";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { RESOURCES } from "@/constants";
-import { currentPlayer, currentPlayerStats, exachange } from "@/state";
+import { currentPlayer, currentPlayerStats, exachange, state } from "@/state";
 import { As } from "@kobalte/core";
 import { TbShip } from "solid-icons/tb";
-import { For, Index, Show, batch, createMemo, createSignal } from "solid-js";
+import { For, Show, batch, createMemo, createSignal } from "solid-js";
 
 export default function MaritimeTradeButton() {
   const [tooltipOpen, setTooltipOpen] = createSignal(false);
@@ -25,7 +25,7 @@ export default function MaritimeTradeButton() {
           <TradeButton />
         </PopoverTrigger>
 
-        <PopoverContent class="w-auto" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()}>
           <PopoverArrow />
 
           <div class="flex items-center justify-between gap-4">
@@ -36,7 +36,7 @@ export default function MaritimeTradeButton() {
                     when={harbor.type !== "all"}
                     fallback={<span class="text-[2rem] leading-none">*</span>}
                   >
-                    <HarborIcon type={harbor.type} />
+                    <ResourceIcon type={harbor.type} />
                   </Show>
 
                   <span class="text-[1.5rem]">{harbor.type === "all" ? "3:1" : "2:1"}</span>
@@ -56,7 +56,7 @@ export default function MaritimeTradeButton() {
                       <Show
                         when={harbor.type === "all"}
                         fallback={
-                          <PickResource
+                          <ResourcePicker
                             onPick={(res) => {
                               batch(() => {
                                 setTooltipOpen(false);
@@ -96,7 +96,7 @@ export default function MaritimeTradeButton() {
 }
 
 const DisabledTradeButton = () => (
-  <Tooltip placement="top">
+  <Tooltip placement="top" disabled={state.game.rollStatus !== "rolled"}>
     <TooltipTrigger asChild>
       <As component="span" tabIndex={0}>
         <TradeButton />
@@ -140,7 +140,7 @@ const ThreeToOnePicker = (props: { onPick: (get: Resource, give: Resource) => vo
           Exachange 3 items of{" "}
           <Show when={selected() && currentPlayer().resources()[selected()!]}>{selected()}</Show>
         </span>
-        <PickResource
+        <ResourcePicker
           selected={selected()}
           disabled={disabled()}
           onPick={(res) => setSelected(selected() === res ? null : res)}
@@ -151,7 +151,7 @@ const ThreeToOnePicker = (props: { onPick: (get: Resource, give: Resource) => vo
         <span>
           For 1 item of <Show when={hovered()}>{hovered()}</Show>
         </span>
-        <PickResource
+        <ResourcePicker
           disabled={selected() ? { [selected()!]: true } : undefined}
           onMouseOver={setHovered}
           onMouseOut={() => setHovered(null)}
@@ -164,27 +164,3 @@ const ThreeToOnePicker = (props: { onPick: (get: Resource, give: Resource) => vo
     </div>
   );
 };
-
-const PickResource = (props: {
-  selected?: Resource | null;
-  disabled?: Partial<Record<Resource, boolean>>;
-  onPick: (res: Resource) => void;
-  onMouseOver?: (res: Resource) => void;
-  onMouseOut?: () => void;
-}) => (
-  <div class="flex gap-1">
-    <Index each={RESOURCES}>
-      {(res) => (
-        <HarborIcon
-          type={res()}
-          aria-selected={props.selected === res()}
-          aria-disabled={props.disabled?.[res()]}
-          onClick={() => props.onPick(res())}
-          onMouseOver={() => props.onMouseOver?.(res())}
-          onMouseOut={props.onMouseOut}
-          class="cursor-pointer transition-colors hover:border-white aria-disabled:pointer-events-none aria-disabled:opacity-30 aria-selected:border-indigo-500"
-        />
-      )}
-    </Index>
-  </div>
-);
