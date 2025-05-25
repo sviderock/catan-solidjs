@@ -21,7 +21,7 @@ const RadioGroupItem: Component<RadioGroupPrimitive.RadioGroupItemProps> = (prop
       <RadioGroupPrimitive.ItemInput />
 
       {props.children}
-      <RadioGroupPrimitive.ItemControl class="aspect-square h-4 w-4 rounded-full border-2 border-current text-current ring-offset-background focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+      <RadioGroupPrimitive.ItemControl class="aspect-square h-4 w-4 rounded-full border-2 border-current text-current ring-offset-background focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
         <RadioGroupPrimitive.ItemIndicator class="flex h-full items-center justify-center">
           <TbCircle class="h-2.5 w-2.5 fill-current text-current" />
         </RadioGroupPrimitive.ItemIndicator>

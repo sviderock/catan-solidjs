@@ -14,9 +14,7 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
+    "paths": { "@/*": ["./src/*"] },
     "lib": ["ESNext", "dom"]
   },
   "exclude": ["node_modules", "dist"]

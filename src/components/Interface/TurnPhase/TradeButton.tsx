@@ -127,10 +127,10 @@ export default function TradeButton() {
             {(player) => (
               <RadioGroupItem
                 value={`${player.idx}`}
-                class="text-[--color]"
+                class="text-(--color)"
                 style={{ "--color": `var(--player-color-${player.idx})` }}
               >
-                <RadioGroupItemLabel class="text-[color:--color]">{player.name}</RadioGroupItemLabel>
+                <RadioGroupItemLabel class="text-(--color)">{player.name}</RadioGroupItemLabel>
               </RadioGroupItem>
             )}
           </For>
@@ -139,7 +139,7 @@ export default function TradeButton() {
         <Collapsible
           open={!!playerSelected()}
           onOpenChange={setPlayerSelected}
-          class="data-[closed]:hidden"
+          class="data-closed:hidden"
         >
           <CollapsibleContent>
             <div class="flex min-w-0 items-center justify-between gap-5">
@@ -152,7 +152,7 @@ export default function TradeButton() {
                 />
                 <Badge
                   variant="outline"
-                  class="w-full justify-between gap-2 bg-[--current-player-color] text-[1rem] text-[color:--current-player-color-text]"
+                  class="w-full justify-between gap-2 bg-(--current-player-color) text-[1rem] text-(--current-player-color-text)"
                 >
                   {currentPlayer().name} <FaSolidAnglesRight size={16} />
                 </Badge>
@@ -169,7 +169,7 @@ export default function TradeButton() {
                 </Show>
                 <Badge
                   variant="outline"
-                  class="w-full justify-between gap-2 bg-[--color] text-[1rem] text-[color:--text]"
+                  class="w-full justify-between gap-2 bg-(--color) text-[1rem] text-(--text)"
                   style={{
                     "--color": `var(--player-color-${playerSelected()})`,
                     "--text": `var(--player-color-text-${playerSelected()})`

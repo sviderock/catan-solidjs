@@ -29,7 +29,7 @@ export default function Die(props: Props) {
 
   return (
     <div
-      class="absolute [transform-style:preserve-3d]"
+      class="absolute transform-3d"
       style={{ transform: `rotateX(${rotation().x}deg) rotateY(${rotation().y}deg)` }}
     >
       <span

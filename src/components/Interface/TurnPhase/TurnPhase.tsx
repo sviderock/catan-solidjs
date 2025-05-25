@@ -59,7 +59,7 @@ export default function TurnPhase() {
 
           <div class="flex items-center gap-2 leading-none">
             <span class="text-2xl">Points:</span>
-            <strong class="flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-[--current-player-color-darker] bg-[--current-player-color] text-xl leading-none text-[--current-player-color-text]">
+            <strong class="flex h-[30px] w-[30px] items-center justify-center rounded-full border-2 border-(--current-player-color-darker) bg-(--current-player-color) text-xl leading-none text-(--current-player-color-text)">
               {currentPlayerStats().points}
             </strong>
             <span>

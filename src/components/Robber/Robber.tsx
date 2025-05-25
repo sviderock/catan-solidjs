@@ -191,10 +191,10 @@ export default function Robber() {
                     {(player) => (
                       <RadioGroupItem
                         value={`${player.idx}`}
-                        class="text-[--color]"
+                        class="text-(--color)"
                         style={{ "--color": `var(--player-color-${player.idx})` }}
                       >
-                        <RadioGroupItemLabel class="text-[color:--color]">
+                        <RadioGroupItemLabel class="text-(--color)">
                           <span>{player.name}</span>
                         </RadioGroupItemLabel>
                       </RadioGroupItem>

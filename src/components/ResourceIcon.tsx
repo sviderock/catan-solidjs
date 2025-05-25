@@ -10,7 +10,7 @@ export default function ResourceIcon(props: Props) {
   return (
     <div
       class={cn(
-        "flex h-[44px] w-[44px] select-none items-center justify-center rounded-full border-4 border-[--border-color] bg-[--color] p-[6px] text-[1.5rem] leading-none aria-disabled:opacity-50",
+        "flex h-[44px] w-[44px] select-none items-center justify-center rounded-full border-4 border-(--border-color) bg-(--color) p-[6px] text-[1.5rem] leading-none aria-disabled:opacity-50",
         props.count !== undefined &&
           "relative after:absolute after:bottom-[-5px] after:right-[-5px] after:flex after:h-5 after:w-5 after:items-center after:justify-center after:rounded-full after:border after:bg-blue-500 after:text-[0.6rem] after:leading-none after:content-[attr(data-after)]",
         props.class

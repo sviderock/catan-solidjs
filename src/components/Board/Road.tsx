@@ -20,7 +20,7 @@ export default function Road(props: RoadProps) {
         props.onClick();
       }}
       class={cn(
-        "absolute h-[--road-height] w-[--road-width] cursor-pointer rounded-[--road-border-round] border-[length:--road-border-width] transition hover:scale-105",
+        "absolute h-(--road-height) w-(--road-width) cursor-pointer rounded-(--road-border-round) border-(length:--road-border-width) transition hover:scale-105",
 
         props.debug &&
           "flex items-center justify-center border-green-900 bg-green-100 opacity-60  after:absolute after:flex after:items-center after:justify-center after:content-[attr(data-after)]",
@@ -31,7 +31,7 @@ export default function Road(props: RoadProps) {
           !props.occupiedBy &&
           "pointer-events-none cursor-default border-transparent opacity-0",
 
-        !!props.occupiedBy && "border-[color:--road-border-color] bg-[--road-color] opacity-100",
+        !!props.occupiedBy && "border-(--road-border-color) bg-(--road-color) opacity-100",
 
         props.occupiedBy && props.occupiedBy !== props.currentPlayer && "cursor-default"
       )}

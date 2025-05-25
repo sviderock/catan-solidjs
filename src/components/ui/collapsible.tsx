@@ -11,7 +11,7 @@ const CollapsibleContent: Component<CollapsiblePrimitive.CollapsibleContentProps
   return (
     <CollapsiblePrimitive.Content
       class={cn(
-        "overflow-hidden data-[closed]:animate-slide-up data-[expanded]:animate-slide-down",
+        "overflow-hidden data-closed:animate-slide-up data-expanded:animate-slide-down",
         props.class
       )}
       {...rest}

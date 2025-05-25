@@ -46,7 +46,7 @@ export default function DropResourcesDialog() {
   return (
     <Dialog defaultOpen>
       <DialogContent
-        class="grid max-w-[36rem] grid-cols-2 gap-5"
+        class="grid max-w-xl grid-cols-2 gap-5"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
@@ -62,7 +62,7 @@ export default function DropResourcesDialog() {
               >
                 <div class="flex flex-col gap-4">
                   <span
-                    class="rounded-sm bg-[--bg] px-2 text-center text-[color:--color]"
+                    class="rounded-sm bg-(--bg) px-2 text-center text-(--color)"
                     style={{
                       "--color": `var(--player-color-text-${idx()})`,
                       "--bg": `var(--player-color-${idx()})`

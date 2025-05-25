@@ -45,7 +45,7 @@ function Hex(props: HexProps) {
           }}
         >
           <HexDiv
-            class={cn("select-none bg-[image:--bg]", state.robber.hex.id === props.id && "*:hidden")}
+            class={cn("select-none bg-(image:--bg)", state.robber.hex.id === props.id && "*:hidden")}
             style={{
               color: Resource[props.type].color,
               "--size": "calc(var(--hex-size) * 0.8)",
@@ -55,11 +55,11 @@ function Hex(props: HexProps) {
             <Show
               when={!desert()}
               fallback={
-                <span class="text-[length:calc((var(--size)*0.6))]">{Resource[props.type].icon}</span>
+                <span class="text-[calc((var(--size)*0.6))]">{Resource[props.type].icon}</span>
               }
             >
               <span
-                class="flex h-[--circle-size] w-[--circle-size] items-center justify-center rounded-full border border-[color:#262322] text-[length:calc((var(--size)/3.5))] leading-none shadow-xl [--circle-size:calc((var(--size)/2.5))]"
+                class="flex h-(--circle-size) w-(--circle-size) items-center justify-center rounded-full border border-[#262322] text-[calc((var(--size)/3.5))] leading-none shadow-xl [--circle-size:calc((var(--size)/2.5))]"
                 classList={{ "transition scale-110": props.hovered() }}
                 style={{
                   "background-color": SandColor,
@@ -86,7 +86,7 @@ function HexDiv(props: JSX.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       {...props}
-      class={`flex h-[--size] w-[calc(0.8658*var(--size))] flex-col items-center justify-center bg-current bg-opacity-50 bg-[length:calc(var(--size)*0.5)] bg-[left_calc(var(--size)*0.08333)_top_calc(var(--size)*0.125)] bg-repeat transition [--size:--hex-size] [clip-path:_polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)] ${props.class}`}
+      class={`flex h-(--size) w-[calc(0.8658*var(--size))] flex-col items-center justify-center bg-current bg-opacity-50 bg-size-[calc(var(--size)*0.5)] bg-position-[left_calc(var(--size)*0.08333)_top_calc(var(--size)*0.125)] bg-repeat transition [--size:var(--hex-size)] [clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)] ${props.class}`}
     />
   );
 }
@@ -104,11 +104,11 @@ function HexDebug(props: Pick<HexProps, "debug" | "siblings" | "onNeighbourHover
                 idx === 0,
               "bg-blue-100 border-2 border-black top-1/4 left-full translate-y-[0] translate-x-[-110%]":
                 idx === 1,
-              "bg-blue-100 border-2 border-black top-3/4 left-full translate-y-[-100%] translate-x-[-110%]":
+              "bg-blue-100 border-2 border-black top-3/4 left-full -translate-y-full translate-x-[-110%]":
                 idx === 2,
               "bg-blue-100 border-2 border-black top-full left-2/4 translate-y-[calc(-100%-5px)] translate-x-[-50%]":
                 idx === 3,
-              "bg-blue-100 border-2 border-black top-3/4 left-0 translate-y-[-100%] translate-x-[2px]":
+              "bg-blue-100 border-2 border-black top-3/4 left-0 -translate-y-full translate-x-[2px]":
                 idx === 4,
               "bg-blue-100 border-2 border-black top-1/4 left-0 translate-y-[0] translate-x-[2px]":
                 idx === 5

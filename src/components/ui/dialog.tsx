@@ -29,7 +29,7 @@ const DialogOverlay: Component<DialogPrimitive.DialogOverlayProps> = (props) => 
   return (
     <DialogPrimitive.Overlay
       class={cn(
-        "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0",
+        "fixed inset-0 z-50 bg-background/80 backdrop-blur-xs data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0",
         props.class
       )}
       {...rest}
@@ -92,7 +92,7 @@ const DialogCloseButton: Component<DialogPrimitive.DialogCloseButtonProps> = (pr
   return (
     <DialogPrimitive.CloseButton
       class={cn(
-        "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[expanded]:bg-accent data-[expanded]:text-muted-foreground",
+        "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-expanded:bg-accent data-expanded:text-muted-foreground",
         props.class
       )}
       {...rest}

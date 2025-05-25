@@ -56,7 +56,7 @@ function Dock(props: { ref: Ref<HTMLDivElement>; pos: HarborPos["dock1"] }) {
   return (
     <div
       ref={props.ref}
-      class="absolute h-[--height] w-[60px] rounded-sm bg-[--color]"
+      class="absolute h-(--height) w-[60px] rounded-sm bg-(--color)"
       style={{
         top: `${props.pos.y}px`,
         left: `${props.pos.x}px`,

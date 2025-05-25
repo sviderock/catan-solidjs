@@ -7,7 +7,7 @@ import { cva } from "class-variance-authority";
 import { cn, shadeHexColor } from "@/utils";
 
 const buttonVariants = cva(
-  "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-30 disabled:select-none",
+  "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-30 disabled:select-none",
   {
     variants: {
       variant: {
@@ -42,7 +42,7 @@ const Button: Component<ButtonProps> = (props) => {
     <button
       class={cn(
         buttonVariants({ variant: props.variant, size: props.size }),
-        props.color && "bg-[--color] text-[--color-text] hover:bg-[--color-darker]",
+        props.color && "bg-(--color) text-(--color-text) hover:bg-(--color-darker)",
         props.class
       )}
       style={{

@@ -23,7 +23,7 @@ export default function StealResourceDialog(props: {
   return (
     <Dialog defaultOpen>
       <DialogContent
-        class="max-w-[36rem] gap-5"
+        class="max-w-xl gap-5"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >

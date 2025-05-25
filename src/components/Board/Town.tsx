@@ -18,14 +18,14 @@ export default function Town(props: TownProps) {
       ref={props.ref}
       data-after={props.debug ? props.idx : ""}
       class={cn(
-        "absolute h-[--town-size] w-[--town-size] cursor-pointer rounded-full transition hover:scale-110",
+        "absolute h-(--town-size) w-(--town-size) cursor-pointer rounded-full transition hover:scale-110",
 
         props.debug &&
-          "flex items-center justify-center border-[length:--town-border-width] border-green-900 bg-green-100 opacity-60 before:absolute before:h-[1px] before:w-[100%] before:bg-yellow-600 before:content-[''] after:absolute after:top-0 after:flex after:h-[100%] after:w-[1px] after:items-center after:justify-center after:bg-yellow-700 after:content-[attr(data-after)]",
+          "flex items-center justify-center border-(length:--town-border-width) border-green-900 bg-green-100 opacity-60 before:absolute before:h-px before:w-full before:bg-yellow-600 before:content-[''] after:absolute after:top-0 after:flex after:h-full after:w-px after:items-center after:justify-center after:bg-yellow-700 after:content-[attr(data-after)]",
 
         props.canBuild &&
           !props.occupiedBy &&
-          "border-[length:--town-border-width] border-green-900 bg-green-100 opacity-60",
+          "border-(length:--town-border-width) border-green-900 bg-green-100 opacity-60",
 
         !props.canBuild &&
           !props.occupiedBy &&
@@ -33,9 +33,9 @@ export default function Town(props: TownProps) {
           "pointer-events-none cursor-default border-transparent opacity-0",
 
         !!props.occupiedBy &&
-          "border-[length:--town-border-width] border-[color:--town-border-color] bg-[--town-color] opacity-100",
+          "border-(length:--town-border-width) border-(--town-border-color) bg-(--town-color) opacity-100",
 
-        props.level() === "city" && "border-[length:--city-border-width] opacity-100",
+        props.level() === "city" && "border-(length:--city-border-width) opacity-100",
 
         props.occupiedBy && props.occupiedBy !== props.currentPlayer && "cursor-default"
       )}

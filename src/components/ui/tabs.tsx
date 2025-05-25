@@ -25,7 +25,7 @@ const TabsTrigger: Component<TabsPrimitive.TabsTriggerProps> = (props) => {
   return (
     <TabsPrimitive.Trigger
       class={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[selected]:bg-background data-[selected]:text-foreground data-[selected]:shadow-sm",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-selected:bg-background data-selected:text-foreground data-selected:shadow-xs",
         props.class
       )}
       {...rest}
@@ -38,7 +38,7 @@ const TabsContent: Component<TabsPrimitive.TabsContentProps> = (props) => {
   return (
     <TabsPrimitive.Content
       class={cn(
-        "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "mt-2 ring-offset-background focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         props.class
       )}
       {...rest}
@@ -51,7 +51,7 @@ const TabsIndicator: Component<TabsPrimitive.TabsIndicatorProps> = (props) => {
   return (
     <TabsPrimitive.Indicator
       class={cn(
-        "duration-250ms absolute transition-all data-[orientation=horizontal]:bottom-[-1px] data-[orientation=vertical]:right-[-1px] data-[orientation=horizontal]:h-[2px] data-[orientation=vertical]:w-[2px]",
+        "duration-250ms absolute transition-all data-[orientation=horizontal]:-bottom-px data-[orientation=vertical]:-right-px data-[orientation=horizontal]:h-[2px] data-[orientation=vertical]:w-[2px]",
         props.class
       )}
       {...rest}
