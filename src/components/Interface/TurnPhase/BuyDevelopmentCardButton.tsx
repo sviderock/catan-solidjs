@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { buyDevelopmentCard, currentPlayer, state } from "@/state";
-import { As } from "@kobalte/core";
 import { CgCardClubs } from "solid-icons/cg";
 import { FaSolidCoins } from "solid-icons/fa";
 import { batch, createSignal } from "solid-js";
@@ -18,10 +17,8 @@ export default function BuyDevelopmentCardButton() {
   return (
     <div class="flex flex-col items-center gap-2">
       <Popover placement="bottom">
-        <PopoverTrigger asChild>
-          <As component={Button} size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
-            <CgCardClubs />
-          </As>
+        <PopoverTrigger as={Button} size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
+          <CgCardClubs />
         </PopoverTrigger>
 
         <PopoverContent class="flex flex-col gap-2">
@@ -30,21 +27,19 @@ export default function BuyDevelopmentCardButton() {
           <div class="flex items-center justify-between gap-2">
             <span>Price:</span>
             <Tooltip placement="right" open={showTooltip()}>
-              <TooltipTrigger asChild>
-                <As
-                  component={Button}
-                  size="sm"
-                  class="h-auto gap-1 bg-amber-500 px-2 py-1 text-amber-950 hover:bg-amber-600 focus:bg-amber-600"
-                  onClick={() => {
-                    batch(() => {
-                      buyDevelopmentCard();
-                      setShowTooltip(true);
-                      setTimeout(() => setShowTooltip(false), 2000);
-                    });
-                  }}
-                >
-                  <FaSolidCoins /> Buy
-                </As>
+              <TooltipTrigger
+                as={Button}
+                size="sm"
+                class="h-auto gap-1 bg-amber-500 px-2 py-1 text-amber-950 hover:bg-amber-600 focus:bg-amber-600"
+                onClick={() => {
+                  batch(() => {
+                    buyDevelopmentCard();
+                    setShowTooltip(true);
+                    setTimeout(() => setShowTooltip(false), 2000);
+                  });
+                }}
+              >
+                <FaSolidCoins /> Buy
               </TooltipTrigger>
 
               <TooltipContent>Bought!</TooltipContent>

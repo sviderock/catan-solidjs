@@ -1,8 +1,8 @@
 import { PlayerColours } from "@/constants";
 import { createSignal } from "solid-js";
-import { type GetStructures } from "./get_structures";
-import { type GetHexes } from "./get_hexes";
 import { createStore, produce } from "solid-js/store";
+import { type GetHexes } from "./get_hexes";
+import { type GetStructures } from "./get_structures";
 
 function generatePlayer(idx: number, withResources?: boolean): Player {
   const [towns, setTowns] = createSignal<Town[]>([]);
@@ -72,19 +72,8 @@ function getHalfSetup(hexes: GetHexes, structures: GetStructures): SetupPhase {
   };
 }
 
-function getStartedGame(hexes: GetHexes, structures: GetStructures): TurnPhase {
+function getStartedGame(hexes: GetHexes): TurnPhase {
   const players: Player[] = generatePlayers(4, true);
-  const towns = structures.array.filter((s): s is Town => s.type === "town");
-  const roads = structures.array.filter((s): s is Road => s.type === "road");
-
-  players[0]!.setTowns([towns[14]!, towns[9]!]);
-  players[0]!.setRoads([roads[16]!, roads[9]!]);
-  players[1]!.setTowns([towns[13]!, towns[34]!]);
-  players[1]!.setRoads([roads[24]!, roads[43]!]);
-  players[2]!.setTowns([towns[38]!, towns[25]!]);
-  players[2]!.setRoads([roads[49]!, roads[31]!]);
-  players[3]!.setTowns([towns[47]!, towns[21]!]);
-  players[3]!.setRoads([roads[62]!, roads[39]!]);
 
   players[0]!.setDevelopmentCards(
     produce((cards) => {
@@ -117,7 +106,7 @@ export default function getGame(
   structures: GetStructures,
   phase?: "game" | "half"
 ): SetupPhase | TurnPhase {
-  if (phase === "game") return getStartedGame(hexes, structures);
+  if (phase === "game") return getStartedGame(hexes);
   if (phase === "half") return getHalfSetup(hexes, structures);
   return getSetupGame(hexes);
 }

@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
-import solidPlugin from "vite-plugin-solid";
 import checker from "vite-plugin-checker";
+import solidPlugin from "vite-plugin-solid";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(({ mode }) => {
@@ -9,20 +9,13 @@ export default defineConfig(({ mode }) => {
     plugins: [
       solidPlugin(),
       tsconfigPaths({ root: ".", projects: ["tsconfig.json"] }),
-      checker({
-        typescript: {
-          root: ".",
-          tsconfigPath: "./tsconfig.json"
-        }
-      })
+      checker({ typescript: { root: ".", tsconfigPath: "./tsconfig.json" } }),
     ],
     server: {
       // @ts-expect-error
       port: +env.PORT || 3000,
-      host: "0.0.0.0"
+      host: "0.0.0.0",
     },
-    build: {
-      target: "esnext"
-    }
+    build: { target: "esnext" },
   };
 });

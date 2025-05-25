@@ -1,5 +1,5 @@
-import { type Accessor, type Setter } from "solid-js";
-import { SetStoreFunction, Store, StoreSetter } from "solid-js/store";
+import type { Accessor, Setter } from "solid-js";
+import type { SetStoreFunction, Store } from "solid-js/store";
 
 declare global {
   type Id = `${number}.${number}`;
@@ -147,11 +147,7 @@ declare global {
     setRoads: Setter<Road[]>;
   };
 
-  type BasePhaseProps = {
-    players: Player[];
-    currentPlayer: number;
-    robber: Hex["id"];
-  };
+  type BasePhaseProps = { players: Player[]; currentPlayer: number; robber: Hex["id"] };
 
   type SetupPhase = BasePhaseProps & {
     phase: "setup";

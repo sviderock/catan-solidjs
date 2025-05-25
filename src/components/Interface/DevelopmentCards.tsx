@@ -5,14 +5,15 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/compone
 import { RESOURCES } from "@/constants";
 import { currentPlayer, exachange, opponents, playDevelopmentCard, setState, state } from "@/state";
 import { resourceCount } from "@/utils";
-import { As } from "@kobalte/core";
 import { FaRegularCircleCheck } from "solid-icons/fa";
 import { Show, batch, createMemo, createSignal } from "solid-js";
 
 export default function DevelopmentCards() {
   const cardStatusCount = createMemo(() => {
     return currentPlayer()
-      .developmentCards.filter((card): card is PlayableDevelopmentCard => card.type !== "victory_point")
+      .developmentCards.filter(
+        (card): card is PlayableDevelopmentCard => card.type !== "victory_point"
+      )
       .reduce(
         (acc, card) => {
           acc[card.type][card.status]++;
@@ -22,7 +23,7 @@ export default function DevelopmentCards() {
           knight: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
           monopoly: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
           year_of_plenty: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
-          road_building: { deck: 0, available: 0, ready_next_turn: 0, played: 0 }
+          road_building: { deck: 0, available: 0, ready_next_turn: 0, played: 0 },
         } as { [K in PlayableDevelopmentCard["type"]]: Record<DevelopmentCardStatus, number> }
       );
   });
@@ -39,7 +40,10 @@ export default function DevelopmentCards() {
       </div>
       <div class="flex gap-2">
         <Knight count={cardStatusCount().knight} available={cardStatusCount().knight.available} />
-        <Monopoly count={cardStatusCount().monopoly} available={cardStatusCount().monopoly.available} />
+        <Monopoly
+          count={cardStatusCount().monopoly}
+          available={cardStatusCount().monopoly.available}
+        />
         <RoadBuilding
           count={cardStatusCount().road_building}
           available={cardStatusCount().road_building.available}
@@ -94,14 +98,12 @@ function Monopoly(props: { count: Record<DevelopmentCardStatus, number>; availab
 
   return (
     <Popover open={open()} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <As
-          component={DevelopmentCard}
-          cardType="monopoly"
-          statusCount={props.count}
-          disabled={!props.available || !!state.game.playedDevelopmentCard}
-        />
-      </PopoverTrigger>
+      <PopoverTrigger
+        as={DevelopmentCard}
+        cardType="monopoly"
+        statusCount={props.count}
+        disabled={!props.available || !!state.game.playedDevelopmentCard}
+      />
 
       <PopoverContent class="flex flex-col gap-2">
         <PopoverArrow />
@@ -159,14 +161,12 @@ function YearOfPlenty(props: { count: Record<DevelopmentCardStatus, number>; ava
 
   return (
     <Popover open={open()} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <As
-          component={DevelopmentCard}
-          cardType="year_of_plenty"
-          statusCount={props.count}
-          disabled={!props.available || !!state.game.playedDevelopmentCard}
-        />
-      </PopoverTrigger>
+      <PopoverTrigger
+        as={DevelopmentCard}
+        cardType="year_of_plenty"
+        statusCount={props.count}
+        disabled={!props.available || !!state.game.playedDevelopmentCard}
+      />
 
       <PopoverContent>
         <PopoverArrow />
@@ -180,7 +180,10 @@ function YearOfPlenty(props: { count: Record<DevelopmentCardStatus, number>; ava
               setSelected((val) => {
                 const allCount = resourceCount(val);
                 const newCount = (val[res] || 0) + 1;
-                return { ...val, [res]: newCount === 3 || allCount + 1 === 3 ? undefined : newCount };
+                return {
+                  ...val,
+                  [res]: newCount === 3 || allCount + 1 === 3 ? undefined : newCount,
+                };
               });
             }}
           />

@@ -8,7 +8,7 @@ import {
   PopoverClose,
   PopoverContent,
   PopoverTitle,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem, RadioGroupItemLabel } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
@@ -16,7 +16,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { EMPTY_RESOURCES, RESOURCES } from "@/constants";
 import { currentPlayer, opponents, state, trade } from "@/state";
 import { cn } from "@/utils";
-import { As } from "@kobalte/core";
 import { FaSolidAnglesLeft, FaSolidAnglesRight, FaSolidArrowRightArrowLeft } from "solid-icons/fa";
 import { IoClose } from "solid-icons/io";
 import { TbMoneybag } from "solid-icons/tb";
@@ -69,7 +68,9 @@ export default function TradeButton() {
   });
 
   const joke = createMemo(() => {
-    const tradeIdentical = RESOURCES.every((res) => finalTrade().give[res] === finalTrade().take[res]);
+    const tradeIdentical = RESOURCES.every(
+      (res) => finalTrade().give[res] === finalTrade().take[res]
+    );
     return tradeIdentical || oneResourceDifferentCount();
   });
 
@@ -89,10 +90,8 @@ export default function TradeButton() {
       }}
     >
       <div class="flex flex-col items-center gap-2">
-        <PopoverTrigger asChild>
-          <As component={Button} size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
-            <TbMoneybag />
-          </As>
+        <PopoverTrigger as={Button} size="iconButton" disabled={state.game.rollStatus !== "rolled"}>
+          <TbMoneybag />
         </PopoverTrigger>
         Trade
       </div>
@@ -106,7 +105,12 @@ export default function TradeButton() {
         <PopoverTitle class="flex items-center justify-between">
           Trade
           <div class="flex items-center gap-2">
-            <Button variant="ghost" size="sm" class={cn(!playerSelected() && "hidden")} onClick={reset}>
+            <Button
+              variant="ghost"
+              size="sm"
+              class={cn(!playerSelected() && "hidden")}
+              onClick={reset}
+            >
               Reset
             </Button>
 
@@ -172,7 +176,7 @@ export default function TradeButton() {
                   class="w-full justify-between gap-2 bg-(--color) text-[1rem] text-(--text)"
                   style={{
                     "--color": `var(--player-color-${playerSelected()})`,
-                    "--text": `var(--player-color-text-${playerSelected()})`
+                    "--text": `var(--player-color-text-${playerSelected()})`,
                   }}
                 >
                   <FaSolidAnglesLeft size={16} />

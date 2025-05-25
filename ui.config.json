@@ -1,11 +1,7 @@
 {
+  "$schema": "https://raw.githubusercontent.com/stefan-karger/solid-ui/main/apps/docs/public/schema.json",
   "tsx": true,
   "componentDir": "./src/components/ui",
-  "tailwind": {
-    "config": "tailwind.config.ts",
-    "css": "src/index.css"
-  },
-  "aliases": {
-    "path": "@/*"
-  }
+  "tailwind": { "config": "tailwind.config.ts", "css": "src/index.css" },
+  "aliases": { "components": "@/components/ui", "utils": "@/utils" }
 }

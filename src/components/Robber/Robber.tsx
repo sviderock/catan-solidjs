@@ -5,7 +5,6 @@ import { Icons } from "@/constants";
 import { currentPlayer, exachange, refs, setState, state } from "@/state";
 import { cn } from "@/utils";
 import { calculateRobber } from "@/utils/calculations";
-import { As } from "@kobalte/core";
 import { AiFillWarning } from "solid-icons/ai";
 import {
   For,
@@ -18,7 +17,7 @@ import {
   createSignal,
   onCleanup,
   splitProps,
-  type JSX
+  type JSX,
 } from "solid-js";
 import { produce } from "solid-js/store";
 import DropResourcesDialog from "./DropResourcesDialog";
@@ -63,7 +62,8 @@ export default function Robber() {
 
   createEffect(() => {
     const { status } = state.robber;
-    if (status === "placed" || status === "drop_resources" || status === "stealing_resource") return;
+    if (status === "placed" || status === "drop_resources" || status === "stealing_resource")
+      return;
 
     const robberRef = refs[state.robber.id]!;
     const widthOffset = robberRef.offsetWidth / 2;
@@ -84,7 +84,7 @@ export default function Robber() {
         left: e.x - widthOffset,
         right: e.x + widthOffset,
         top: e.y - heightOffset,
-        bottom: e.y + heightOffset
+        bottom: e.y + heightOffset,
       };
       const closestHexId = findClosest(newPos, state.hexes.array);
 
@@ -126,7 +126,7 @@ export default function Robber() {
     const robberRef = refs[state.robber.id];
     return {
       x: state.hexes.byId[newHexId()!]!.calc().center.x - robberRef!.offsetWidth / 2,
-      y: state.hexes.byId[newHexId()!]!.calc().center.y - robberRef!.offsetHeight / 2
+      y: state.hexes.byId[newHexId()!]!.calc().center.y - robberRef!.offsetHeight / 2,
     };
   };
 
@@ -145,7 +145,7 @@ export default function Robber() {
     );
     return {
       blockingYourself: !!players.find((player) => player === currentPlayer()),
-      players: players.filter((player) => player !== currentPlayer())
+      players: players.filter((player) => player !== currentPlayer()),
     };
   });
 
@@ -157,15 +157,16 @@ export default function Robber() {
 
   return (
     <>
-      <Tooltip placement="right" open={state.robber.status === "select_hex_and_player" && !isDragging()}>
-        <TooltipTrigger asChild>
-          <As
-            component={RobberCircle}
-            ref={refs[state.robber.id]}
-            pos={robberPos()}
-            classList={{ "opacity-50": isDragging() }}
-          />
-        </TooltipTrigger>
+      <Tooltip
+        placement="right"
+        open={state.robber.status === "select_hex_and_player" && !isDragging()}
+      >
+        <TooltipTrigger
+          as={RobberCircle}
+          ref={refs[state.robber.id]}
+          pos={robberPos()}
+          classList={{ "opacity-50": isDragging() }}
+        />
 
         <TooltipContent>
           <Switch>
@@ -225,9 +226,11 @@ export default function Robber() {
 
       <Show when={isDragging() && newHexId() && newHexId() !== state.robber.hex.id}>
         <Tooltip placement="right" open={isDragging() && newHexId() === initialHexId()}>
-          <TooltipTrigger asChild>
-            <As component={RobberCircle} pos={prognosedNewPos()!} class="bg-blue-500 bg-opacity-80" />
-          </TooltipTrigger>
+          <TooltipTrigger
+            as={RobberCircle}
+            pos={prognosedNewPos()!}
+            class="bg-blue-500 bg-opacity-80"
+          />
 
           <TooltipContent>Move me to different hex</TooltipContent>
         </Tooltip>
@@ -248,7 +251,7 @@ export default function Robber() {
             batch(() => {
               exachange([
                 { idx: currentPlayer().idx, add: { [res]: 1 } },
-                { idx: playerIdx, remove: { [res]: 1 } }
+                { idx: playerIdx, remove: { [res]: 1 } },
               ]);
               setState("robber", "status", "placed");
               resetState();

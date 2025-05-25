@@ -1,4 +1,4 @@
-import { Button, type ButtonProps } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { EMPTY_RESOURCES, RESOURCES, Resource } from "@/constants";
 import { cn, resourceCount } from "@/utils";
 import { AiTwotoneMinusCircle, AiTwotonePlusCircle } from "solid-icons/ai";
@@ -10,8 +10,9 @@ import {
   splitProps,
   useContext,
   type Component,
+  type ComponentProps,
   type Context,
-  type JSX
+  type JSX,
 } from "solid-js";
 
 type Props = {
@@ -31,7 +32,8 @@ function makeRSContext(props: Props) {
     disabled: () => props.disabled,
     allSelected: () => {
       return (
-        props.requiredCount === undefined || resourceCount(selectedResources()) === props.requiredCount
+        props.requiredCount === undefined ||
+        resourceCount(selectedResources()) === props.requiredCount
       );
     },
     leftToSelect: () => {
@@ -41,7 +43,7 @@ function makeRSContext(props: Props) {
     addDisabled: () => props.requiredCount === resourceCount(selectedResources()),
     subtractDisabled: (res: Resource) => selectedResources()[res] === 0,
     selectedResources,
-    setSelectedResources
+    setSelectedResources,
   };
 }
 
@@ -115,17 +117,26 @@ export function ResourceSelectorContent() {
   );
 }
 
-type RSButtonProps = Omit<ButtonProps, "onClick"> & { onClick: (resources: PlayerResources) => void };
+type RSButtonProps = Omit<ComponentProps<"button">, "onClick"> & {
+  onClick: (resources: PlayerResources) => void;
+};
 export const ResourceSelectorButton: Component<RSButtonProps> = (props) => {
   const [, rest] = splitProps(props, ["onClick", "disabled"]);
   const context = useRSContext();
   const disabled = () => !context.allSelected() || context.disabled() || props.disabled;
   return (
-    <Button onClick={() => props.onClick(context.selectedResources())} disabled={disabled()} {...rest} />
+    <Button
+      onClick={() => props.onClick(context.selectedResources())}
+      disabled={disabled()}
+      {...rest}
+    />
   );
 };
 
-type RSErrorProps = { children: (leftToSelect: number) => JSX.Element; successFallback?: JSX.Element };
+type RSErrorProps = {
+  children: (leftToSelect: number) => JSX.Element;
+  successFallback?: JSX.Element;
+};
 export const ResourceSelectorError: Component<RSErrorProps> = (props) => {
   const context = useRSContext();
   return (

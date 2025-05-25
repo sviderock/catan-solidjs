@@ -32,7 +32,7 @@ export default function App() {
   return (
     <main class="flex h-full w-full items-center justify-center bg-blue-600">
       <Board />
-      <Switch checked={debug()} onChange={setDebug} label="Debug" class="absolute left-10 top-10 " />
+      <Switch checked={debug()} onChange={setDebug} class="absolute left-10 top-10 " />
     </main>
   );
 }

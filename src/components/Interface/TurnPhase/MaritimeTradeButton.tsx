@@ -5,7 +5,6 @@ import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from "@/compone
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { currentPlayer, currentPlayerStats, exachange, state } from "@/state";
-import { As } from "@kobalte/core";
 import { TbShip } from "solid-icons/tb";
 import { For, Show, batch, createMemo, createSignal } from "solid-js";
 
@@ -64,8 +63,8 @@ export default function MaritimeTradeButton() {
                                   {
                                     idx: currentPlayer().idx,
                                     add: { [res]: 1 },
-                                    remove: { [harbor.type]: 2 }
-                                  }
+                                    remove: { [harbor.type]: 2 },
+                                  },
                                 ]);
                               });
                             }}
@@ -77,7 +76,11 @@ export default function MaritimeTradeButton() {
                             batch(() => {
                               setTooltipOpen(false);
                               exachange([
-                                { idx: currentPlayer().idx, add: { [get]: 1 }, remove: { [give]: 3 } }
+                                {
+                                  idx: currentPlayer().idx,
+                                  add: { [get]: 1 },
+                                  remove: { [give]: 3 },
+                                },
                               ]);
                             });
                           }}
@@ -97,12 +100,9 @@ export default function MaritimeTradeButton() {
 
 const DisabledTradeButton = () => (
   <Tooltip placement="top" disabled={state.game.rollStatus !== "rolled"}>
-    <TooltipTrigger asChild>
-      <As component="span" tabIndex={0}>
-        <TradeButton />
-      </As>
+    <TooltipTrigger as="span" tabIndex={0}>
+      <TradeButton />
     </TooltipTrigger>
-
     <TooltipContent>You don't have any harbors</TooltipContent>
   </Tooltip>
 );
